@@ -14,8 +14,10 @@ const { dbRun, dbGet } = require('../db/database');
 router.post('/save-result', (req, res) => {
   try {
     const {
-      tara, industrie, nr_angajati, buget,
+      tara, industrie, industrie_subcategorie, nr_angajati, buget,
       scor_procese, scor_financiar, scor_it, scor_echipa, scor_conformitate,
+      scor_securitate, scor_infrastructura_date, scor_aplicatii_sw,
+      scor_prezenta_online, scor_colaborare,
       scor_total, erp_recomandat,
     } = req.body;
 
@@ -25,17 +27,28 @@ router.post('/save-result', (req, res) => {
 
     const result = dbRun(
       `INSERT INTO audit_results
-         (tara, industrie, nr_angajati, buget,
+         (tara, industrie, industrie_subcategorie, nr_angajati, buget,
           scor_procese, scor_financiar, scor_it, scor_echipa, scor_conformitate,
+          scor_securitate, scor_infrastructura_date, scor_aplicatii_sw,
+          scor_prezenta_online, scor_colaborare,
           scor_total, erp_recomandat)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        tara, industrie, nr_angajati || 0, buget,
-        scor_procese      || 0,
-        scor_financiar    || 0,
-        scor_it           || 0,
-        scor_echipa       || 0,
-        scor_conformitate || 0,
+        tara,
+        industrie,
+        industrie_subcategorie || '',
+        nr_angajati || 0,
+        buget,
+        scor_procese               || 0,
+        scor_financiar             || 0,
+        scor_it                    || 0,
+        scor_echipa                || 0,
+        scor_conformitate          || 0,
+        scor_securitate            || 0,
+        scor_infrastructura_date   || 0,
+        scor_aplicatii_sw          || 0,
+        scor_prezenta_online       || 0,
+        scor_colaborare            || 0,
         scor_total,
         erp_recomandat || 'Necunoscut',
       ],
@@ -64,15 +77,20 @@ router.get('/benchmark', (req, res) => {
 
     const stats = dbGet(
       `SELECT
-         COUNT(*)                         AS total_companii,
-         ROUND(AVG(scor_total), 1)        AS scor_mediu,
-         ROUND(AVG(scor_procese), 2)      AS avg_procese,
-         ROUND(AVG(scor_financiar), 2)    AS avg_financiar,
-         ROUND(AVG(scor_it), 2)           AS avg_it,
-         ROUND(AVG(scor_echipa), 2)       AS avg_echipa,
-         ROUND(AVG(scor_conformitate), 2) AS avg_conformitate,
-         MIN(scor_total)                  AS scor_minim,
-         MAX(scor_total)                  AS scor_maxim
+         COUNT(*)                          AS total_companii,
+         ROUND(AVG(scor_total), 1)         AS scor_mediu,
+         ROUND(AVG(scor_procese), 2)       AS avg_procese,
+         ROUND(AVG(scor_financiar), 2)     AS avg_financiar,
+         ROUND(AVG(scor_it), 2)            AS avg_it,
+         ROUND(AVG(scor_echipa), 2)        AS avg_echipa,
+         ROUND(AVG(scor_conformitate), 2)  AS avg_conformitate,
+         ROUND(AVG(scor_securitate), 2)           AS avg_securitate,
+         ROUND(AVG(scor_infrastructura_date), 2)  AS avg_infrastructura_date,
+         ROUND(AVG(scor_aplicatii_sw), 2)         AS avg_aplicatii_sw,
+         ROUND(AVG(scor_prezenta_online), 2)      AS avg_prezenta_online,
+         ROUND(AVG(scor_colaborare), 2)           AS avg_colaborare,
+         MIN(scor_total)                   AS scor_minim,
+         MAX(scor_total)                   AS scor_maxim
        FROM audit_results ${where}`,
       params,
     );

@@ -43,8 +43,22 @@ const initDatabase = async () => {
   // Executare schemă SQL (CREATE TABLE IF NOT EXISTS)
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   db.run(schema);
-  persistToFile();
 
+  // Migrare: adaugă coloanele noi dacă nu există (ALTER TABLE ignorat dacă există deja)
+  const migrations = [
+    `ALTER TABLE audit_results ADD COLUMN industrie_subcategorie TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE audit_results ADD COLUMN scor_securitate INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE audit_results ADD COLUMN scor_digital INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE audit_results ADD COLUMN scor_colaborare INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE audit_results ADD COLUMN scor_infrastructura_date INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE audit_results ADD COLUMN scor_aplicatii_sw INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE audit_results ADD COLUMN scor_prezenta_online INTEGER NOT NULL DEFAULT 0`,
+  ];
+  for (const sql of migrations) {
+    try { db.run(sql); } catch (_) { /* coloana există deja */ }
+  }
+
+  persistToFile();
   console.log('✅ Baza de date inițializată:', DB_PATH);
   return db;
 };

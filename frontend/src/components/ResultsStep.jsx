@@ -1,5 +1,5 @@
 // ============================================================
-// Pasul 3 — Rezultatele auditului
+// Pasul 3 - Rezultatele auditului
 // Afișează: radar chart, scor total, verdict, carduri pe dimensiuni
 // Salvează rezultatele anonim și afișează benchmark-ul
 // ============================================================
@@ -15,6 +15,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Radar } from 'react-chartjs-2';
+import { DIMENSION_RECOMMENDATIONS } from '../utils/recommendations.js';
 import axios from 'axios';
 import {
   DIMENSIONS,
@@ -47,17 +48,23 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
     setSaving(true);
 
     const payload = {
-      tara:              profile.tara,
-      industrie:         profile.industrie,
-      nr_angajati:       profile.nr_angajati,
-      buget:             profile.buget,
-      scor_procese:      scores.procese      || 0,
-      scor_financiar:    scores.financiar    || 0,
-      scor_it:           scores.it           || 0,
-      scor_echipa:       scores.echipa       || 0,
-      scor_conformitate: scores.conformitate || 0,
-      scor_total:        totalScore,
-      erp_recomandat:    'In calcul',
+      tara:                    profile.tara,
+      industrie:               profile.industrie_categorie || profile.industrie,
+      industrie_subcategorie:  profile.industrie,
+      nr_angajati:             profile.nr_angajati,
+      buget:                   profile.buget,
+      scor_procese:            scores.procese      || 0,
+      scor_financiar:          scores.financiar    || 0,
+      scor_it:                 scores.it           || 0,
+      scor_echipa:             scores.echipa       || 0,
+      scor_conformitate:       scores.conformitate || 0,
+      scor_securitate:          scores.securitate          || 0,
+      scor_infrastructura_date: scores.infrastructura_date || 0,
+      scor_aplicatii_sw:        scores.aplicatii_sw        || 0,
+      scor_prezenta_online:     scores.prezenta_online     || 0,
+      scor_colaborare:          scores.colaborare          || 0,
+      scor_total:              totalScore,
+      erp_recomandat:          'In calcul',
     };
 
     try {
@@ -68,7 +75,7 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
       const pResp = await axios.get(`${API_URL}/api/benchmark/percentile`, {
         params: {
           country:  profile.tara,
-          industry: profile.industrie,
+          industry: profile.industrie_categorie || profile.industrie,
           score:    totalScore,
         },
       });
@@ -134,7 +141,19 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
         },
         grid:        { color: '#e2e8f0' },
         angleLines:  { color: '#e2e8f0' },
-        pointLabels: { font: { size: 11, weight: 'bold' }, color: '#475569' },
+        pointLabels: {
+          font: { size: 10, weight: 'bold' },
+          color: '#475569',
+          padding: 12,
+          callback: (label) => {
+            // Sparge etichetele lungi pe două rânduri
+            if (label.length > 12) {
+              const mid = label.lastIndexOf(' ', Math.floor(label.length / 2) + 4);
+              if (mid > 0) return [label.slice(0, mid), label.slice(mid + 1)];
+            }
+            return label;
+          },
+        },
       },
     },
   };
@@ -185,7 +204,7 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
                 high: '✅', medium: '⚠️', low: '❌',
               }[verdict.level]} {verdict.label}
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-1">Rezultatul Auditului ERP</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-1">Rezultatul Evaluării ERP</h2>
             <p className="text-slate-600 text-sm leading-relaxed max-w-md">
               {verdict.level === 'high'   && 'Felicitări! Compania dumneavoastră are o pregătire excelentă și este pregătită pentru implementarea unui sistem ERP.'}
               {verdict.level === 'medium' && 'Compania are o bază solidă, dar sunt necesare câteva îmbunătățiri înainte de implementarea ERP.'}
@@ -197,9 +216,16 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
               <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full">
                 {profile.tara === 'RO' ? '🇷🇴 România' : '🇲🇩 Moldova'}
               </span>
-              <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full">
-                {profile.industrie}
-              </span>
+              {profile.industrie_categorie && (
+                <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full">
+                  {profile.industrie_categorie}
+                </span>
+              )}
+              {profile.industrie && (
+                <span className="bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-full">
+                  {profile.industrie}
+                </span>
+              )}
               <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full">
                 {profile.nr_angajati} angajați
               </span>
@@ -229,8 +255,10 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
           <div className="space-y-4">
             {DIMENSIONS.map((dim) => {
               const pct = calculateDimensionScore(scores[dim.id] || 0);
+              const level = pct <= 33 ? 'low' : pct <= 66 ? 'medium' : 'high';
+              const rec = DIMENSION_RECOMMENDATIONS[dim.id]?.[level];
               return (
-                <div key={dim.id}>
+                <div key={dim.id} className={`rounded-xl p-3 transition-all ${level === 'low' ? 'bg-red-50/60' : level === 'medium' ? 'bg-yellow-50/60' : 'bg-slate-50/40'}`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-base">{dim.icon}</span>
@@ -238,13 +266,30 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
                     </div>
                     <span className={`text-sm font-bold ${textColor(pct)}`}>{pct}%</span>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-1">
                     <div
                       className={`h-full rounded-full progress-bar ${barColor(pct)}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">{dim.description}</p>
+                  <p className="text-xs text-slate-400">{dim.description}</p>
+
+                  {/* Recomandare specifică pentru scoruri slabe/medii */}
+                  {rec && (
+                    <div className={`mt-2.5 rounded-lg p-2.5 border ${level === 'low' ? 'bg-red-50 border-red-100' : 'bg-yellow-50 border-yellow-100'}`}>
+                      <p className={`text-xs font-semibold mb-1.5 ${level === 'low' ? 'text-red-700' : 'text-yellow-700'}`}>
+                        {level === 'low' ? '⚠️' : '💡'} {rec.title}
+                      </p>
+                      <ul className="space-y-1">
+                        {rec.actions.map((action, i) => (
+                          <li key={i} className={`text-xs flex items-start gap-1.5 ${level === 'low' ? 'text-red-600' : 'text-yellow-700'}`}>
+                            <span className="mt-0.5 flex-shrink-0">→</span>
+                            <span>{action}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -263,7 +308,7 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
               <p className="font-semibold text-lg leading-snug">
                 Compania ta e mai pregătită decât{' '}
                 <span className="text-blue-200 font-black">{benchmarkData.percentila}%</span>{' '}
-                din IMM-urile din <span className="text-blue-200">{profile.industrie}</span>
+                din IMM-urile din <span className="text-blue-200">{profile.industrie_categorie || profile.industrie}</span>
               </p>
               <p className="text-blue-200 text-sm mt-0.5">
                 Bazat pe {benchmarkData.total_companii} companie{benchmarkData.total_companii !== 1 ? 'i' : ''} analizate{benchmarkData.total_companii !== 1 ? '' : 'ă'} din{' '}
@@ -275,6 +320,26 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
         </div>
       )}
 
+      {/* ====== LEGENDĂ CULORI ====== */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Interpretarea scorului</p>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { color: 'bg-red-500',    range: '0 – 33%',   label: 'Pregătire scăzută',  desc: 'Procese manuale, infrastructură insuficientă' },
+            { color: 'bg-yellow-400', range: '34 – 66%',  label: 'Pregătire medie',    desc: 'Parțial digitalizat, ajustări necesare' },
+            { color: 'bg-green-500',  range: '67 – 100%', label: 'Pregătire ridicată', desc: 'Procese mature, pregătit pentru ERP' },
+          ].map((item) => (
+            <div key={item.range} className="flex items-start gap-2 flex-1 min-w-[180px] p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className={`w-3 h-3 rounded-full mt-0.5 flex-shrink-0 ${item.color}`} />
+              <div>
+                <p className="text-xs font-semibold text-slate-700">{item.range} - {item.label}</p>
+                <p className="text-xs text-slate-500">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ====== NAVIGARE ====== */}
       <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
         <button
@@ -284,7 +349,7 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Înapoi la Audit
+          Înapoi la Evaluare
         </button>
 
         <button

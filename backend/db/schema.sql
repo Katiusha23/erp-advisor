@@ -1,33 +1,39 @@
 -- ============================================================
 -- Schema bazei de date pentru ERP Advisor
--- Tabel pentru stocarea anonimă a rezultatelor auditului ERP
+-- Tabel pentru stocarea anonimă a rezultatelor evaluării ERP
 -- Folosit pentru calculul benchmark-ului comparativ
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS audit_results (
-  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  id                     INTEGER PRIMARY KEY AUTOINCREMENT,
 
   -- Profilul companiei (anonim, fără date de identificare)
-  tara                TEXT    NOT NULL,  -- 'RO' sau 'MD'
-  industrie           TEXT    NOT NULL,  -- Producție, Comerț, Servicii, etc.
-  nr_angajati         INTEGER NOT NULL DEFAULT 0,
-  buget               TEXT    NOT NULL,  -- sub5k, 5-15k, 15-40k, peste40k
+  tara                   TEXT    NOT NULL,  -- 'RO' sau 'MD'
+  industrie              TEXT    NOT NULL,  -- Categoria principală (Producție, Comerț & Distribuție, etc.)
+  industrie_subcategorie TEXT    NOT NULL DEFAULT '',  -- Subcategoria specifică (Alimentară & Băuturi, etc.)
+  nr_angajati            INTEGER NOT NULL DEFAULT 0,
+  buget                  TEXT    NOT NULL,  -- sub5k, 5-15k, 15-40k, peste40k
 
-  -- Scorurile brute pe cele 5 dimensiuni (1–4)
-  scor_procese        INTEGER NOT NULL,
-  scor_financiar      INTEGER NOT NULL,
-  scor_it             INTEGER NOT NULL,
-  scor_echipa         INTEGER NOT NULL,
-  scor_conformitate   INTEGER NOT NULL,
+  -- Scorurile brute pe cele 10 dimensiuni (1-4)
+  scor_procese              INTEGER NOT NULL DEFAULT 0,
+  scor_financiar            INTEGER NOT NULL DEFAULT 0,
+  scor_it                   INTEGER NOT NULL DEFAULT 0,
+  scor_echipa               INTEGER NOT NULL DEFAULT 0,
+  scor_conformitate         INTEGER NOT NULL DEFAULT 0,
+  scor_securitate           INTEGER NOT NULL DEFAULT 0,
+  scor_infrastructura_date  INTEGER NOT NULL DEFAULT 0,
+  scor_aplicatii_sw         INTEGER NOT NULL DEFAULT 0,
+  scor_prezenta_online      INTEGER NOT NULL DEFAULT 0,
+  scor_colaborare           INTEGER NOT NULL DEFAULT 0,
 
-  -- Scorul total procentual (0–100)
-  scor_total          INTEGER NOT NULL,
+  -- Scorul total procentual (0-100)
+  scor_total             INTEGER NOT NULL,
 
   -- ERP-ul recomandat după calcul
-  erp_recomandat      TEXT    NOT NULL DEFAULT 'Necunoscut',
+  erp_recomandat         TEXT    NOT NULL DEFAULT 'Necunoscut',
 
   -- Marca temporală (UTC)
-  creat_la            DATETIME DEFAULT CURRENT_TIMESTAMP
+  creat_la               DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Index pentru filtrare rapidă după țară și industrie (folosit la benchmark)

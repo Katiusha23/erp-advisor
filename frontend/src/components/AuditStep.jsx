@@ -1,188 +1,326 @@
-// ============================================================
-// Pasul 2 — Auditul ERP pe 5 dimensiuni
-// Fiecare dimensiune are o întrebare cu 4 opțiuni (scor 1–4)
-// ============================================================
-
 import { useState } from 'react';
-import { DIMENSIONS } from '../utils/scoring.js';
+import { DIMENSIONS, PROCESS_QUESTIONS, calculateERPCompatibility } from '../utils/scoring.js';
+import { TECH_QUESTIONS, calcTechCompatibility } from '../utils/techQuestions.js';
+import Tooltip from './Tooltip.jsx';
+import { TECH_TERMS } from '../utils/recommendations.js';
 
-export default function AuditStep({ scores, onChange, onNext, onPrev }) {
+const TCO_STEP_ID = '__tco__';
+
+function LiveScoreBar({ profile, scores, techAnswers }) {
+  const dimResults   = calculateERPCompatibility(profile, scores);
+  const answered     = Object.values(scores).filter((v) => v > 0).length;
+  const techAnswered = Object.keys(techAnswers || {}).length;
+  if (answered === 0) return null;
+
+  const finalResults = dimResults.map((r) => {
+    if (techAnswered === 0) return r;
+    const tech    = calcTechCompatibility(techAnswers, r.name);
+    const blended = Math.round(r.compatibility * 0.75 + tech.score * 0.25);
+    return { ...r, compatibility: Math.min(100, Math.max(0, blended)) };
+  });
+
+  const colors = {
+    'WinMentor':      { bar: 'bg-blue-500',    text: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200' },
+    'UNA.md':         { bar: 'bg-emerald-500',  text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    'Saga Software':  { bar: 'bg-violet-500',   text: 'text-violet-700',  bg: 'bg-violet-50',  border: 'border-violet-200' },
+    'Odoo Community': { bar: 'bg-orange-500',   text: 'text-orange-700',  bg: 'bg-orange-50',  border: 'border-orange-200' },
+  };
+
+  return (
+    <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          Compatibilitate ERP — timp real
+        </p>
+        {techAnswered > 0 && (
+          <span className="text-[10px] bg-amber-50 text-amber-600 font-medium px-2 py-0.5 rounded border border-amber-200">
+            include audit tehnic
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {finalResults.map((r) => {
+          const c = colors[r.name] || { bar: 'bg-slate-400', text: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' };
+          return (
+            <div key={r.name} className={`${c.bg} border ${c.border} rounded-lg px-2.5 py-2`}>
+              <div className={`text-xs font-bold ${c.text} truncate`}>{r.name}</div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden">
+                  <div className={`h-full ${c.bar} rounded-full transition-all duration-500`} style={{ width: `${r.compatibility}%` }} />
+                </div>
+                <span className={`text-xs font-bold ${c.text} w-8 text-right`}>{r.compatibility}%</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function AuditStep({ scores, onChange, onNext, onPrev, profile, plan, techAnswers, onTechChange, tcoData, onTcoChange }) {
   const [currentDim, setCurrentDim] = useState(0);
   const [error, setError]           = useState(false);
+  const [tcoError, setTcoError]     = useState('');
 
-  const dim       = DIMENSIONS[currentDim];
-  const isLast    = currentDim === DIMENSIONS.length - 1;
-  const isFirst   = currentDim === 0;
-  const answered  = Object.values(scores).filter((v) => v > 0).length;
+  const isPremium    = plan === 'premium';
+  const allQuestions = isPremium ? [...DIMENSIONS, ...TECH_QUESTIONS, { id: TCO_STEP_ID, label: 'Calculator TCO & ROI', icon: '' }] : DIMENSIONS;
+  const totalSteps   = allQuestions.length;
 
-  const selectOption = (score) => {
-    onChange({ ...scores, [dim.id]: score });
+  const isTcoStep     = isPremium && currentDim === totalSteps - 1;
+  const isTechSection = isPremium && currentDim >= DIMENSIONS.length && !isTcoStep;
+  const currentQ      = allQuestions[currentDim];
+
+  const industryQ = !isTechSection && currentQ.id === 'procese' && profile?.industrie_categorie
+    ? (PROCESS_QUESTIONS[profile.industrie_categorie] || PROCESS_QUESTIONS.default)
+    : null;
+  const dim = industryQ
+    ? { ...currentQ, question: industryQ.question, options: industryQ.options }
+    : currentQ;
+
+  const isLast  = currentDim === totalSteps - 1;
+  const isFirst = currentDim === 0;
+
+  const currentAnswer = isTechSection ? techAnswers?.[dim.id] : scores[dim.id];
+
+  const answeredRegular = Object.values(scores).filter((v) => v > 0).length;
+  const answeredTech    = isPremium ? Object.keys(techAnswers || {}).length : 0;
+  const totalAnswered   = answeredRegular + answeredTech;
+
+  const selectOption = (value) => {
+    if (isTechSection) {
+      onTechChange({ ...(techAnswers || {}), [dim.id]: value });
+    } else {
+      onChange({ ...scores, [dim.id]: value });
+    }
     setError(false);
   };
 
   const handleNext = () => {
-    if (!scores[dim.id]) {
-      setError(true);
+    if (isTcoStep) {
+      if (!tcoData.ore_manuale || !tcoData.nr_angajati_erp || !tcoData.cost_orar) {
+        setTcoError('Completați câmpurile obligatorii (primele 3).');
+        return;
+      }
+      setTcoError('');
+      onNext();
       return;
     }
-    if (isLast) {
-      onNext();
-    } else {
-      setCurrentDim((d) => d + 1);
-      setError(false);
-    }
+    if (!currentAnswer) { setError(true); return; }
+    if (isLast) { onNext(); }
+    else { setCurrentDim((d) => d + 1); setError(false); }
   };
 
   const handlePrev = () => {
-    if (isFirst) {
-      onPrev();
-    } else {
-      setCurrentDim((d) => d - 1);
-      setError(false);
-    }
+    if (isFirst) { onPrev(); }
+    else { setCurrentDim((d) => d - 1); setError(false); }
   };
 
+  const nextLabel = isTcoStep
+    ? 'Vezi Rezultatele'
+    : isLast
+    ? 'Calculator TCO'
+    : isTechSection
+    ? (currentDim === DIMENSIONS.length + TECH_QUESTIONS.length - 1 ? 'Calculator TCO' : `Întrebarea ${currentDim - DIMENSIONS.length + 2}`)
+    : isPremium && currentDim === DIMENSIONS.length - 1
+    ? 'Audit Tehnic'
+    : `Dimensiunea ${currentDim + 2}`;
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 sm:p-8">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-xl">
-              {dim.icon}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">Audit ERP</h2>
-              <p className="text-sm text-slate-500">{dim.description}</p>
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">
+              {isTechSection ? 'Audit tehnic avansat' : 'Evaluare ERP'}
+            </h2>
+            <p className="text-sm text-slate-400">{dim.description || dim.label}</p>
           </div>
           <div className="text-right">
-            <span className="text-sm font-semibold text-slate-700">{answered}/{DIMENSIONS.length}</span>
+            <span className="text-sm font-semibold text-slate-700">{totalAnswered}/{totalSteps}</span>
             <p className="text-xs text-slate-400">completate</p>
           </div>
         </div>
 
-        {/* Bara progres dimensiuni */}
-        <div className="flex gap-1.5">
-          {DIMENSIONS.map((d, i) => (
-            <button
-              key={d.id}
-              onClick={() => setCurrentDim(i)}
-              className="flex-1 relative group"
-              title={d.label}
-            >
-              <div
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i < currentDim || scores[d.id]
-                    ? 'bg-blue-500'
-                    : i === currentDim
-                    ? 'bg-blue-300'
-                    : 'bg-slate-200'
-                }`}
-              />
-            </button>
-          ))}
-        </div>
+        <LiveScoreBar profile={profile} scores={scores} techAnswers={techAnswers} />
 
-        {/* Etichete dimensiuni */}
-        <div className="flex gap-1.5 mt-1">
-          {DIMENSIONS.map((d, i) => (
-            <div key={d.id} className="flex-1 text-center">
-              <span className={`text-[10px] leading-tight block truncate ${
-                i === currentDim ? 'text-blue-600 font-medium' : 'text-slate-400'
-              }`}>
-                {d.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Întrebarea curentă */}
-      <div className="mb-6 animate-fade-in" key={dim.id}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-            Dimensiunea {currentDim + 1} din {DIMENSIONS.length}
-          </span>
-        </div>
-        <h3 className="text-lg font-semibold text-slate-800 mt-2 mb-5 leading-snug">
-          {dim.question}
-        </h3>
-
-        {/* Opțiunile de răspuns */}
-        <div className="space-y-3">
-          {dim.options.map((opt) => {
-            const isSelected = scores[dim.id] === opt.score;
-            const barWidth   = `${(opt.score / 4) * 100}%`;
-
+        {/* Bara de progres */}
+        <div className="flex gap-1 mb-2">
+          {allQuestions.map((q, i) => {
+            const isCurrent   = i === currentDim;
+            const isTech      = isPremium && i >= DIMENSIONS.length;
+            const isCompleted = isTech ? !!(techAnswers?.[q.id]) : !!(scores[q.id] && scores[q.id] > 0);
             return (
               <button
-                key={opt.score}
-                type="button"
-                onClick={() => selectOption(opt.score)}
-                className={`
-                  w-full text-left p-4 rounded-xl border-2 transition-all duration-200 group
-                  ${isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-sm'
-                    : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}
-                `}
+                key={q.id}
+                onClick={() => setCurrentDim(i)}
+                className="flex-1 group"
+                title={q.label}
               >
-                <div className="flex items-start gap-3">
-                  {/* Indicator scor */}
-                  <div
-                    className={`
-                      w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5
-                      ${isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}
-                    `}
-                  >
-                    {opt.score}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium leading-snug ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>
-                      {opt.text}
-                    </p>
-
-                    {/* Mini progress bar */}
-                    <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isSelected ? 'bg-blue-500' : 'bg-slate-300 group-hover:bg-slate-400'
-                        }`}
-                        style={{ width: barWidth }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Bifă selecție */}
-                  {isSelected && (
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
+                <div className={`w-full h-1.5 rounded-full transition-colors ${
+                  isCompleted ? (isTech ? 'bg-amber-400' : 'bg-blue-500')
+                  : isCurrent ? (isTech ? 'bg-amber-300' : 'bg-blue-300')
+                  : 'bg-slate-200 group-hover:bg-slate-300'
+                }`} />
               </button>
             );
           })}
         </div>
 
-        {error && (
-          <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
-            </svg>
-            Vă rugăm să selectați o opțiune pentru a continua.
-          </p>
-        )}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500">{dim.label}</p>
+          {isPremium && (
+            <span className={`text-xs px-2 py-0.5 rounded font-medium border ${
+              isTechSection
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-slate-50 text-slate-500 border-slate-200'
+            }`}>
+              {isTechSection ? 'Premium' : 'Basic'}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Separator secțiune tech */}
+      {isTechSection && currentDim === DIMENSIONS.length && (
+        <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+          Evaluarea de bază este completă. Urmează auditul tehnic avansat ({TECH_QUESTIONS.length} întrebări).
+        </div>
+      )}
+
+      {/* TCO STEP */}
+      {isTcoStep && (
+        <div className="mb-6 space-y-5">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">Calculator TCO & ROI</h3>
+            <p className="text-sm text-slate-500">Introduceți datele actuale pentru a calcula economiile estimate după implementarea ERP.</p>
+          </div>
+          <div className="space-y-4">
+            {[
+              { key: 'ore_manuale',       label: 'Ore/săptămână pierdute pe procese manuale *', placeholder: 'ex: 20', suffix: 'ore/săpt.' },
+              { key: 'nr_angajati_erp',   label: 'Număr angajați care vor folosi ERP *',         placeholder: 'ex: 10', suffix: 'angajați' },
+              { key: 'cost_orar',         label: 'Cost orar mediu per angajat *',                placeholder: 'ex: 15', suffix: '€/oră' },
+              { key: 'cost_implementare', label: 'Buget implementare estimat (opțional)',        placeholder: 'ex: 5000', suffix: '€' },
+            ].map((f) => (
+              <div key={f.key}>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">{f.label}</label>
+                <div className="flex items-center border-2 border-slate-200 rounded-lg overflow-hidden focus-within:border-amber-400 transition-colors">
+                  <input
+                    type="number"
+                    min="0"
+                    value={tcoData[f.key] || ''}
+                    onChange={(e) => { onTcoChange({ ...tcoData, [f.key]: e.target.value }); setTcoError(''); }}
+                    placeholder={f.placeholder}
+                    className="flex-1 px-4 py-3 text-sm outline-none bg-white"
+                  />
+                  <span className="px-3 py-3 bg-slate-50 text-slate-500 text-xs border-l border-slate-200 whitespace-nowrap">{f.suffix}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {tcoError && <p className="text-red-500 text-xs">{tcoError}</p>}
+        </div>
+      )}
+
+      {/* Întrebarea curentă */}
+      {!isTcoStep && (
+        <div className="mb-6 animate-fade-in" key={dim.id}>
+          <div className="flex items-center flex-wrap gap-2 mb-1">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+              isTechSection ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
+            }`}>
+              {isTechSection
+                ? `Tehnic ${currentDim - DIMENSIONS.length + 1} din ${TECH_QUESTIONS.length}`
+                : `Dimensiunea ${currentDim + 1} din ${DIMENSIONS.length}`}
+            </span>
+            {!isTechSection && dim.toeContext && (
+              <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1">
+                {dim.toeContext.includes('TOE') && <Tooltip term="TOE" explanation={TECH_TERMS['TOE']} />}
+                {dim.toeContext.includes('TAM') && <Tooltip term="TAM" explanation={TECH_TERMS['TAM']} />}
+                {dim.toeContext}
+              </span>
+            )}
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 mt-2 mb-5 leading-snug">
+            {dim.question}
+          </h3>
+
+          <div className="space-y-2.5">
+            {dim.options.map((opt, idx) => {
+              const optValue   = isTechSection ? opt.text : opt.score;
+              const isSelected = currentAnswer === optValue;
+              const barWidth   = `${((opt.score || (idx + 1)) / 4) * 100}%`;
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectOption(optValue)}
+                  className={`
+                    w-full text-left p-4 rounded-lg border-2 transition-colors group
+                    ${isSelected
+                      ? isTechSection
+                        ? 'border-amber-400 bg-amber-50'
+                        : 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}
+                  `}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`
+                      w-6 h-6 rounded flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5
+                      ${isSelected
+                        ? isTechSection ? 'bg-amber-400 text-white' : 'bg-blue-500 text-white'
+                        : 'bg-slate-100 text-slate-400'}
+                    `}>
+                      {isTechSection ? (idx + 1) : opt.score}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium leading-snug ${isSelected ? (isTechSection ? 'text-amber-800' : 'text-blue-800') : 'text-slate-700'}`}>
+                        {opt.text}
+                      </p>
+                      <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isSelected
+                              ? isTechSection ? 'bg-amber-400' : 'bg-blue-500'
+                              : 'bg-slate-200 group-hover:bg-slate-300'
+                          }`}
+                          style={{ width: barWidth }}
+                        />
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        isTechSection ? 'bg-amber-400' : 'bg-blue-500'
+                      }`}>
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {error && (
+            <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
+              </svg>
+              Selectați o opțiune pentru a continua.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Navigare */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
         <button
           onClick={handlePrev}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-medium px-4 py-2 rounded-xl hover:bg-slate-100 transition-all"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors text-sm"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -192,23 +330,14 @@ export default function AuditStep({ scores, onChange, onNext, onPrev }) {
 
         <button
           onClick={handleNext}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
+          className={`text-white font-medium px-8 py-3 rounded-lg transition-colors flex items-center gap-2 text-sm ${
+            isTechSection ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
-          {isLast ? (
-            <>
-              Vezi Rezultatele
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </>
-          ) : (
-            <>
-              Dimensiunea {currentDim + 2}
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </>
-          )}
+          {nextLabel}
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

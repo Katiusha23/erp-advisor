@@ -1,5 +1,5 @@
 // ============================================================
-// Stepper vizual — afișează progresul prin cei 4 pași ai auditului
+// Stepper vizual - afișează progresul prin cei 4 pași ai auditului
 // ============================================================
 
 export default function Stepper({ steps, currentStep }) {

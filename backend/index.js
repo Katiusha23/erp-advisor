@@ -9,6 +9,7 @@ const cors = require('cors');
 const { initDatabase } = require('./db/database');
 const pdfRoutes = require('./routes/pdf');
 const benchmarkRoutes = require('./routes/benchmark');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +43,7 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // ============================================================
 app.use('/api', pdfRoutes);       // POST /api/generate-pdf
 app.use('/api', benchmarkRoutes); // POST /api/save-result, GET /api/benchmark
+app.use('/api', emailRoutes);     // POST /api/send-results
 
 // Rută de verificare stare server (health check pentru Render)
 app.get('/health', (req, res) => {

@@ -71,7 +71,7 @@ router.post('/generate-pdf', async (req, res) => {
     });
 
     // ============================================================
-    // Secțiunea 3 — rânduri de scoruri cu bară de progres canvas
+    // Secțiunea 3 - rânduri de scoruri cu bară de progres canvas
     // ============================================================
     const dimensiuni = [
       { id: 'procese',      label: 'Procese Interne' },
@@ -79,12 +79,18 @@ router.post('/generate-pdf', async (req, res) => {
       { id: 'it',           label: 'Capacitate IT' },
       { id: 'echipa',       label: 'Pregătire Echipă' },
       { id: 'conformitate', label: 'Conformitate Legislativă' },
+      { id: 'securitate',          label: 'Securitate & Date' },
+      { id: 'infrastructura_date', label: 'Infrastructură Date' },
+      { id: 'aplicatii_sw',        label: 'Aplicații Software' },
+      { id: 'prezenta_online',     label: 'Prezență Online' },
+      { id: 'colaborare',          label: 'Colaborare & Groupware' },
     ];
 
     const scoruriRows = dimensiuni.map(({ id, label }) => {
       const raw   = scoruri?.[id] || 0;
-      const pct   = Math.round((raw / 4) * 100);
-      const color = pct >= 75 ? C.green : pct >= 45 ? C.yellow : C.red;
+      // Formula corectă: ((raw-1)/3)*100, identică cu calculateDimensionScore din frontend
+      const pct   = raw > 0 ? Math.round(((raw - 1) / 3) * 100) : 0;
+      const color = pct >= 67 ? C.green : pct >= 45 ? C.yellow : C.red;
       const barW  = Math.max(Math.round(430 * pct / 100), 2);
 
       return [
@@ -114,7 +120,7 @@ router.post('/generate-pdf', async (req, res) => {
     });
 
     // ============================================================
-    // Secțiunea 5 — faze metodologie
+    // Secțiunea 5 - faze metodologie
     // ============================================================
     const phaseBlocks = (metodologie?.phases || []).map((ph, i) => ({
       margin: [0, 0, 0, 10],
@@ -159,7 +165,7 @@ router.post('/generate-pdf', async (req, res) => {
           body: [[{
             stack: [
               { text: 'ERP Advisor', fontSize: 28, bold: true, color: C.white, margin: [0, 0, 0, 6] },
-              { text: 'Raport de Audit - Pregătire pentru Implementare ERP', fontSize: 12, color: '#93c5fd' },
+              { text: 'Raport de Evaluare - Pregătire pentru Implementare ERP', fontSize: 12, color: '#93c5fd' },
               { text: `Generat la: ${dataRaport}`, fontSize: 10, color: '#94a3b8', margin: [0, 6, 0, 0] },
             ],
             fillColor: C.primary,
@@ -189,6 +195,9 @@ router.post('/generate-pdf', async (req, res) => {
                 stack: [
                   { text: 'Industria', fontSize: 9, color: C.gray },
                   { text: profil?.industrie || '-', fontSize: 11, bold: true, color: C.dark },
+                  ...(profil?.industrie_subcategorie ? [
+                    { text: profil.industrie_subcategorie, fontSize: 9, color: C.blue, margin: [0, 2, 0, 0] },
+                  ] : []),
                 ],
                 border: [false, false, false, false],
               },
@@ -411,5 +420,6 @@ function formatBuget(buget) {
   };
   return map[buget] || buget || '-';
 }
+
 
 module.exports = router;
