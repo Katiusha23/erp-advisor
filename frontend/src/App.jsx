@@ -46,8 +46,8 @@ export default function App() {
   const [tcoData,     setTcoData]           = useState({});
   const [benchmarkData, setBenchmarkData]   = useState(null);
 
-  const goNext  = () => setCurrentStep((s) => Math.min(s + 1, 3));
-  const goPrev  = () => setCurrentStep((s) => Math.max(s - 1, 0));
+  const goNext  = () => { setCurrentStep((s) => Math.min(s + 1, 3)); window.scrollTo(0, 0); };
+  const goPrev  = () => { setCurrentStep((s) => Math.max(s - 1, 0)); window.scrollTo(0, 0); };
 
   const resetApp = () => {
     setPlan(null);
