@@ -325,9 +325,9 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Interpretarea scorului</p>
         <div className="flex flex-wrap gap-3">
           {[
-            { color: 'bg-red-500',    range: '0 – 33%',   label: 'Pregătire scăzută',  desc: 'Procese manuale, infrastructură insuficientă' },
-            { color: 'bg-yellow-400', range: '34 – 66%',  label: 'Pregătire medie',    desc: 'Parțial digitalizat, ajustări necesare' },
-            { color: 'bg-green-500',  range: '67 – 100%', label: 'Pregătire ridicată', desc: 'Procese mature, pregătit pentru ERP' },
+            { color: 'bg-red-500',    range: '0 – 44%',   label: 'Necesită Pregătire',  desc: 'Procese manuale, infrastructură insuficientă' },
+            { color: 'bg-yellow-400', range: '45 – 74%',  label: 'Pregătire Parțială',  desc: 'Parțial digitalizat, ajustări necesare' },
+            { color: 'bg-green-500',  range: '75 – 100%', label: 'Pregătit pentru ERP', desc: 'Procese mature, pregătit pentru ERP' },
           ].map((item) => (
             <div key={item.range} className="flex items-start gap-2 flex-1 min-w-[180px] p-3 bg-slate-50 rounded-xl border border-slate-100">
               <div className={`w-3 h-3 rounded-full mt-0.5 flex-shrink-0 ${item.color}`} />
