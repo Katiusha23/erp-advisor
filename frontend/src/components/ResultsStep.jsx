@@ -310,10 +310,6 @@ export default function ResultsStep({ profile, scores, benchmarkData, setBenchma
                 <span className="text-blue-200 font-black">{benchmarkData.percentila}%</span>{' '}
                 din IMM-urile din <span className="text-blue-200">{profile.industrie_categorie || profile.industrie}</span>
               </p>
-              <p className="text-blue-200 text-sm mt-0.5">
-                Bazat pe {benchmarkData.total_companii} companie{benchmarkData.total_companii !== 1 ? 'i' : ''} analizate{benchmarkData.total_companii !== 1 ? '' : 'ă'} din{' '}
-                {profile.tara === 'RO' ? 'România' : 'Moldova'}
-              </p>
             </div>
             <div className="ml-auto text-5xl hidden sm:block">📊</div>
           </div>
