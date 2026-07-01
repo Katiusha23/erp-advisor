@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import PremiumModal from './PremiumModal.jsx';
 import { calcTechCompatibility } from '../utils/techQuestions.js';
+import { calcTCO } from '../utils/tco.js';
 import TermTooltip from './Tooltip.jsx';
 import { TECH_TERMS } from '../utils/recommendations.js';
 import {
@@ -28,7 +29,7 @@ ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, 
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-export default function RecommendationStep({ profile, scores, techAnswers, benchmarkData, plan, onReset, onPrev }) {
+export default function RecommendationStep({ profile, scores, techAnswers, tcoData, benchmarkData, plan, onReset, onPrev }) {
   const chartRef         = useRef(null);
   const [pdfLoading,   setPdfLoading]   = useState(false);
   const [pdfError,     setPdfError]     = useState(null);
@@ -45,6 +46,10 @@ export default function RecommendationStep({ profile, scores, techAnswers, bench
   const techResult = (plan === 'premium' && topERP && techAnswers && Object.keys(techAnswers).length > 0)
     ? calcTechCompatibility(techAnswers, topERP.name)
     : null;
+  const tcoResult = (plan === 'premium' && tcoData && tcoData.ore_manuale && tcoData.nr_angajati_erp && tcoData.cost_orar)
+    ? calcTCO(tcoData)
+    : null;
+
   const downloadPDF = async () => {
     setPdfLoading(true);
     setPdfError(null);
@@ -416,7 +421,6 @@ export default function RecommendationStep({ profile, scores, techAnswers, bench
                 <strong className="text-slate-700">{benchmarkData.percentila}%</strong> din IMM-urile din{' '}
                 {profile.industrie_categorie || profile.industrie} —{' '}
                 {profile.tara === 'RO' ? 'România' : 'Moldova'}
-                {' '}({benchmarkData.total_companii} companii analizate)
               </p>
             </div>
           </div>
@@ -468,6 +472,25 @@ export default function RecommendationStep({ profile, scores, techAnswers, bench
             )}
           </div>
 
+          {tcoResult && (
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 mt-4">
+              <h3 className="font-semibold text-slate-800 text-sm mb-3">Estimare costuri & economii</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { label: 'Costuri manuale actuale/an', value: `${Math.round(tcoResult.costuriActuale).toLocaleString('ro-RO')} €`, color: 'text-red-600', bg: 'bg-red-50' },
+                  { label: 'Economii estimate/an',       value: `${Math.round(tcoResult.economiiAnuale).toLocaleString('ro-RO')} €`, color: 'text-green-600', bg: 'bg-green-50' },
+                  ...(tcoResult.breakEvenLuni !== null ? [{ label: 'Break-even investiție', value: `${tcoResult.breakEvenLuni} luni`, color: 'text-amber-600', bg: 'bg-amber-50' }] : []),
+                  ...(tcoResult.roi3ani !== null ? [{ label: 'ROI estimat pe 3 ani', value: `${tcoResult.roi3ani}%`, color: 'text-green-600', bg: 'bg-green-50' }] : []),
+                ].map((item) => (
+                  <div key={item.label} className={`p-3 rounded-lg ${item.bg} border border-slate-100`}>
+                    <p className="text-xs text-slate-500 mb-0.5">{item.label}</p>
+                    <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400 mt-2 italic">Economiile sunt estimate la ~65% reducere a timpului manual după implementare ERP.</p>
+            </div>
+          )}
         </div>
       )}
 

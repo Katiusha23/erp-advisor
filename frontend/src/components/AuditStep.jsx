@@ -56,15 +56,21 @@ function LiveScoreBar({ profile, scores, techAnswers }) {
   );
 }
 
-export default function AuditStep({ scores, onChange, onNext, onPrev, profile, plan, techAnswers, onTechChange }) {
+const TCO_STEP_ID = '__tco__';
+
+export default function AuditStep({ scores, onChange, onNext, onPrev, profile, plan, techAnswers, onTechChange, tcoData, onTcoChange }) {
   const [currentDim, setCurrentDim] = useState(0);
   const [error, setError]           = useState(false);
+  const [tcoError, setTcoError]     = useState('');
 
   const isPremium    = plan === 'premium';
-  const allQuestions = isPremium ? [...DIMENSIONS, ...TECH_QUESTIONS] : DIMENSIONS;
+  const allQuestions = isPremium
+    ? [...DIMENSIONS, ...TECH_QUESTIONS, { id: TCO_STEP_ID, label: 'Estimare costuri manuale', icon: '' }]
+    : DIMENSIONS;
   const totalSteps   = allQuestions.length;
 
-  const isTechSection = isPremium && currentDim >= DIMENSIONS.length;
+  const isTcoStep     = isPremium && currentDim === totalSteps - 1;
+  const isTechSection = isPremium && currentDim >= DIMENSIONS.length && !isTcoStep;
   const currentQ      = allQuestions[currentDim];
 
   const industryQ = !isTechSection && currentQ.id === 'procese' && profile?.industrie_categorie
@@ -93,6 +99,11 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
   };
 
   const handleNext = () => {
+    if (isTcoStep) {
+      setTcoError('');
+      onNext();
+      return;
+    }
     if (!currentAnswer) { setError(true); return; }
     if (isLast) { onNext(); }
     else { setCurrentDim((d) => d + 1); setError(false); }
@@ -103,8 +114,10 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
     else { setCurrentDim((d) => d - 1); setError(false); }
   };
 
-  const nextLabel = isLast
+  const nextLabel = isTcoStep
     ? 'Vezi Rezultatele'
+    : isLast
+    ? 'Estimare costuri'
     : isPremium && currentDim === DIMENSIONS.length - 1
     ? 'Audit Tehnic'
     : isTechSection
@@ -174,8 +187,42 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
         </div>
       )}
 
+      {/* Pasul costuri manuale */}
+      {isTcoStep && (
+        <div className="mb-6 space-y-5">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">Estimare costuri procese manuale</h3>
+            <p className="text-sm text-slate-500">Completați datele pentru a calcula economiile estimate și break-even-ul investiției (opțional).</p>
+          </div>
+          <div className="space-y-4">
+            {[
+              { key: 'ore_manuale',        label: 'Ore/săptămână pierdute pe procese manuale', placeholder: 'ex: 20', suffix: 'ore/săpt.' },
+              { key: 'nr_angajati_erp',    label: 'Număr angajați implicați în aceste procese', placeholder: 'ex: 10', suffix: 'angajați' },
+              { key: 'cost_orar',          label: 'Cost orar mediu per angajat',                placeholder: 'ex: 15', suffix: '€/oră' },
+              { key: 'buget_implementare', label: 'Bugetul estimat pentru implementare ERP',    placeholder: 'ex: 5000', suffix: '€' },
+            ].map((f) => (
+              <div key={f.key}>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">{f.label}</label>
+                <div className="flex items-center border-2 border-slate-200 rounded-lg overflow-hidden focus-within:border-amber-400 transition-colors">
+                  <input
+                    type="number"
+                    min="0"
+                    value={tcoData[f.key] || ''}
+                    onChange={(e) => { onTcoChange({ ...tcoData, [f.key]: e.target.value }); setTcoError(''); }}
+                    placeholder={f.placeholder}
+                    className="flex-1 px-4 py-3 text-sm outline-none bg-white"
+                  />
+                  <span className="px-3 py-3 bg-slate-50 text-slate-500 text-xs border-l border-slate-200 whitespace-nowrap">{f.suffix}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 italic">Toate câmpurile sunt opționale. Puteți continua fără a le completa.</p>
+        </div>
+      )}
+
       {/* Întrebarea curentă */}
-      <div className="mb-6 animate-fade-in" key={dim.id}>
+      {!isTcoStep && <div className="mb-6 animate-fade-in" key={dim.id}>
         <div className="flex items-center flex-wrap gap-2 mb-1">
           <span className={`text-xs font-medium px-2 py-0.5 rounded ${
             isTechSection ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
@@ -263,7 +310,7 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
             Selectați o opțiune pentru a continua.
           </p>
         )}
-      </div>
+      </div>}
 
       {/* Navigare */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
