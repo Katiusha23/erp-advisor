@@ -14,9 +14,13 @@ export function calcTCO(tcoData, profileBuget) {
   const costuriActuale = oreManuale * costOrar * 52;
   const economiiAnuale = costuriActuale * 0.65;
 
+  const breakEvenLuni = (economiiAnuale > 0 && bugetImpl > 0)
+    ? Math.ceil((bugetImpl / economiiAnuale) * 12)
+    : null;
+
   const roi3ani = (bugetImpl > 0 && economiiAnuale > 0)
     ? Math.round(((economiiAnuale * 3 - bugetImpl) / bugetImpl) * 100)
     : null;
 
-  return { costuriActuale, economiiAnuale, roi3ani, bugetFolosit: bugetImpl };
+  return { costuriActuale, economiiAnuale, breakEvenLuni, roi3ani, bugetFolosit: bugetImpl };
 }

@@ -479,6 +479,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
                 {[
                   { label: 'Costuri manuale actuale/an', value: `${Math.round(tcoResult.costuriActuale).toLocaleString('ro-RO')} €`, color: 'text-red-600', bg: 'bg-red-50' },
                   { label: 'Economii estimate/an',       value: `${Math.round(tcoResult.economiiAnuale).toLocaleString('ro-RO')} €`, color: 'text-green-600', bg: 'bg-green-50' },
+                  ...(tcoResult.breakEvenLuni !== null ? [{ label: 'Break-even investiție', value: `${tcoResult.breakEvenLuni} luni`, color: 'text-amber-600', bg: 'bg-amber-50' }] : []),
                   ...(tcoResult.roi3ani !== null ? [{ label: 'ROI estimat pe 3 ani', value: `${tcoResult.roi3ani}%`, color: 'text-green-600', bg: 'bg-green-50' }] : []),
                 ].map((item) => (
                   <div key={item.label} className={`p-3 rounded-lg ${item.bg} border border-slate-100`}>
