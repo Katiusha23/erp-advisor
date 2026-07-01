@@ -135,7 +135,9 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
     }, 300);
   };
 
-  const techResult = stage === 'rezultate' ? calcTechCompatibility(techAnswers, erpName) : null;
+  const techResult = (stage === 'rezultate' && Object.keys(techAnswers).length > 0)
+    ? calcTechCompatibility(techAnswers, erpName)
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -255,22 +257,31 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                 </div>
               </div>
 
-              {techStep > 0 && (
+              <div className="flex items-center justify-between mt-2">
+                {techStep > 0 ? (
+                  <button
+                    onClick={() => setTechStep((s) => s - 1)}
+                    className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    ← Înapoi
+                  </button>
+                ) : <span />}
                 <button
-                  onClick={() => setTechStep((s) => s - 1)}
+                  onClick={() => setStage('rezultate')}
                   className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  ← Înapoi
+                  Sari peste →
                 </button>
-              )}
+              </div>
             </div>
           )}
 
           {/* ====== REZULTATE ====== */}
-          {stage === 'rezultate' && techResult && (
+          {stage === 'rezultate' && (
             <div className="space-y-6">
 
               {/* Compatibilitate tehnică */}
+              {techResult ? (
               <div>
                 <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
                   🖥️ Compatibilitate Tehnică - {erpName}
@@ -304,6 +315,11 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                   </div>
                 )}
               </div>
+              ) : (
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-500 text-center">
+                  Auditul tehnic nu a fost completat. Completați întrebările tehnice pentru a vedea scorul de compatibilitate.
+                </div>
+              )}
 
               <button
                 onClick={onClose}
