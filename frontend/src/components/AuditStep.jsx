@@ -196,10 +196,9 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
           </div>
           <div className="space-y-4">
             {[
-              { key: 'ore_manuale',        label: 'Ore/săptămână pierdute pe procese manuale', placeholder: 'ex: 20', suffix: 'ore/săpt.' },
-              { key: 'nr_angajati_erp',    label: 'Număr angajați implicați în aceste procese', placeholder: 'ex: 10', suffix: 'angajați' },
-              { key: 'cost_orar',          label: 'Cost orar mediu per angajat',                placeholder: 'ex: 15', suffix: '€/oră' },
-              { key: 'buget_implementare', label: 'Bugetul estimat pentru implementare ERP',    placeholder: 'ex: 5000', suffix: '€' },
+              { key: 'ore_manuale',        label: 'Total ore/săptămână pierdute pe procese manuale (toți angajații)', placeholder: 'ex: 40', suffix: 'ore/săpt.' },
+              { key: 'cost_orar',          label: 'Cost orar mediu per angajat',                                       placeholder: 'ex: 15', suffix: '€/oră' },
+              { key: 'buget_implementare', label: 'Bugetul estimat pentru implementare ERP',                           placeholder: 'ex: 5000', suffix: '€' },
             ].map((f) => (
               <div key={f.key}>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">{f.label}</label>

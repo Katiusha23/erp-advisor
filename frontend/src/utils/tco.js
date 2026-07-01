@@ -1,10 +1,10 @@
 export function calcTCO(tcoData) {
-  const oreManuale = parseFloat(tcoData.ore_manuale)       || 0;
-  const nrAngajati = parseFloat(tcoData.nr_angajati_erp)   || 0;
-  const costOrar   = parseFloat(tcoData.cost_orar)         || 0;
+  const oreManuale = parseFloat(tcoData.ore_manuale)        || 0;
+  const costOrar   = parseFloat(tcoData.cost_orar)          || 0;
   const bugetImpl  = parseFloat(tcoData.buget_implementare) || 0;
 
-  const costuriActuale = oreManuale * nrAngajati * costOrar * 52;
+  // ore_manuale = total ore/săptămână pierdute pe procese manuale (toți angajații)
+  const costuriActuale = oreManuale * costOrar * 52;
   const economiiAnuale = costuriActuale * 0.65;
 
   const breakEvenLuni = (economiiAnuale > 0 && bugetImpl > 0)

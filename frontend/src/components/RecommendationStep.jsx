@@ -46,7 +46,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
   const techResult = (plan === 'premium' && topERP && techAnswers && Object.keys(techAnswers).length > 0)
     ? calcTechCompatibility(techAnswers, topERP.name)
     : null;
-  const tcoResult = (plan === 'premium' && tcoData && tcoData.ore_manuale && tcoData.nr_angajati_erp && tcoData.cost_orar)
+  const tcoResult = (plan === 'premium' && tcoData && tcoData.ore_manuale && tcoData.cost_orar)
     ? calcTCO(tcoData)
     : null;
 
