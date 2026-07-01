@@ -11,18 +11,7 @@ function PaymentModal({ onSuccess, onClose }) {
     return digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
   };
 
-  const validate = () => {
-    const e = {};
-    if (!card.nume.trim())               e.nume   = 'Introduceți numele de pe card';
-    if (card.nr.replace(/\s/g, '').length < 16) e.nr = 'Număr de card invalid';
-    if (card.expiry.length < 5)          e.expiry = 'Data expirării invalidă';
-    if (card.cvv.length < 3)             e.cvv    = 'CVV invalid';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
   const handlePay = () => {
-    if (!validate()) return;
     setLoading(true);
     setTimeout(() => { setLoading(false); onSuccess(); }, 1800);
   };

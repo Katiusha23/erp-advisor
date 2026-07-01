@@ -257,22 +257,14 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-2">
-                {techStep > 0 ? (
-                  <button
-                    onClick={() => setTechStep((s) => s - 1)}
-                    className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    ← Înapoi
-                  </button>
-                ) : <span />}
+              {techStep > 0 && (
                 <button
-                  onClick={() => setStage('rezultate')}
+                  onClick={() => setTechStep((s) => s - 1)}
                   className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  Sari peste →
+                  ← Înapoi
                 </button>
-              </div>
+              )}
             </div>
           )}
 
