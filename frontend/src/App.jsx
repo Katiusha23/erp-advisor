@@ -43,7 +43,6 @@ export default function App() {
   const [profile, setProfile]               = useState(INITIAL_PROFILE);
   const [scores, setScores]                 = useState(INITIAL_SCORES);
   const [techAnswers, setTechAnswers]        = useState({});
-  const [tcoData,     setTcoData]           = useState({});
   const [benchmarkData, setBenchmarkData]   = useState(null);
 
   const goNext  = () => { setCurrentStep((s) => Math.min(s + 1, 3)); window.scrollTo(0, 0); };
@@ -55,7 +54,6 @@ export default function App() {
     setProfile(INITIAL_PROFILE);
     setScores(INITIAL_SCORES);
     setTechAnswers({});
-    setTcoData({});
     setBenchmarkData(null);
   };
 
@@ -69,8 +67,6 @@ export default function App() {
       plan={plan}
       techAnswers={techAnswers}
       onTechChange={setTechAnswers}
-      tcoData={tcoData}
-      onTcoChange={setTcoData}
       onNext={goNext}
       onPrev={goPrev}
     />,
@@ -88,7 +84,6 @@ export default function App() {
       profile={profile}
       scores={scores}
       techAnswers={techAnswers}
-      tcoData={tcoData}
       benchmarkData={benchmarkData}
       plan={plan}
       onReset={resetApp}

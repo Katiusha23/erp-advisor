@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import PremiumModal from './PremiumModal.jsx';
 import { calcTechCompatibility } from '../utils/techQuestions.js';
-import { calcTCO } from '../utils/tco.js';
 import TermTooltip from './Tooltip.jsx';
 import { TECH_TERMS } from '../utils/recommendations.js';
 import {
@@ -29,7 +28,7 @@ ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, 
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-export default function RecommendationStep({ profile, scores, techAnswers, tcoData, benchmarkData, plan, onReset, onPrev }) {
+export default function RecommendationStep({ profile, scores, techAnswers, benchmarkData, plan, onReset, onPrev }) {
   const chartRef         = useRef(null);
   const [pdfLoading,   setPdfLoading]   = useState(false);
   const [pdfError,     setPdfError]     = useState(null);
@@ -46,10 +45,6 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
   const techResult = (plan === 'premium' && topERP && techAnswers && Object.keys(techAnswers).length > 0)
     ? calcTechCompatibility(techAnswers, topERP.name)
     : null;
-  const tcoResult = (plan === 'premium' && topERP && tcoData && tcoData.ore_manuale)
-    ? calcTCO(tcoData, topERP.name)
-    : null;
-
   const downloadPDF = async () => {
     setPdfLoading(true);
     setPdfError(null);
@@ -473,41 +468,6 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
             )}
           </div>
 
-          {tcoResult && (
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-sm">Calculator TCO & ROI — {topERP.name}</h3>
-                  <p className="text-xs text-slate-400">Cost total de proprietate și rentabilitate pe 3 ani</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 mb-3">
-                {[
-                  { label: 'Costuri manuale actuale/an', value: `${tcoResult.costuriActuale.toLocaleString('ro-RO')} €`, color: 'text-red-600',   bg: 'bg-red-50'   },
-                  { label: 'Economii estimate/an',       value: `${Math.round(tcoResult.economiiAnuale).toLocaleString('ro-RO')} €`, color: 'text-green-600', bg: 'bg-green-50' },
-                  { label: 'TCO primul an',              value: `${tcoResult.tco1an.toLocaleString('ro-RO')} €`, color: 'text-slate-700', bg: 'bg-slate-50' },
-                  { label: 'TCO pe 3 ani',               value: `${tcoResult.tco3ani.toLocaleString('ro-RO')} €`, color: 'text-slate-700', bg: 'bg-slate-50' },
-                  ...(tcoResult.roi3ani !== null ? [{ label: 'ROI pe 3 ani', value: `${tcoResult.roi3ani.toLocaleString('ro-RO')}%`, color: 'text-green-600', bg: 'bg-green-50' }] : []),
-                  ...(tcoResult.breakEvenLuni !== null ? [{ label: 'Break-even', value: `${tcoResult.breakEvenLuni} ${tcoResult.breakEvenLuni === 1 ? 'lună' : 'luni'} (${Math.ceil(tcoResult.breakEvenLuni / 12 * 10) / 10} ${tcoResult.breakEvenLuni <= 12 ? 'an' : 'ani'})`, color: 'text-amber-600', bg: 'bg-amber-50' }] : []),
-                ].map((item) => (
-                  <div key={item.label} className={`p-3 rounded-lg ${item.bg} border border-slate-100`}>
-                    <p className="text-xs text-slate-500 mb-1">{item.label}</p>
-                    <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
-                  </div>
-                ))}
-              </div>
-              {topERP.id === 'odoo' && (
-                <p className="text-xs text-slate-400 mt-2 italic border-t border-slate-100 pt-2">
-                  Calculul folosește Odoo Community (licență 0€). Odoo Enterprise costă ~14€/utilizator/lună și include suport oficial.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       )}
 
@@ -532,7 +492,6 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
                   { ok: true,  text: 'Comparație 4 sisteme' },
                   { ok: true,  text: 'Raport PDF de bază' },
                   { ok: false, text: 'Audit tehnic avansat' },
-                  { ok: false, text: 'Calculator TCO & ROI' },
                 ].map((f) => (
                   <li key={f.text} className="flex items-start gap-2 text-sm">
                     <span className={`mt-0.5 flex-shrink-0 ${f.ok ? 'text-green-500' : 'text-slate-200'}`}>
@@ -563,8 +522,6 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
                   'Tot ce include Basic',
                   'Audit tehnic OS & Rețea',
                   'Audit Firewall & Securitate',
-                  'Calculator TCO pe 3 ani',
-                  'ROI & Break-even estimat',
                   'Raport PDF complet',
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-slate-700">

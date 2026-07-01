@@ -4,8 +4,6 @@ import { TECH_QUESTIONS, calcTechCompatibility } from '../utils/techQuestions.js
 import Tooltip from './Tooltip.jsx';
 import { TECH_TERMS } from '../utils/recommendations.js';
 
-const TCO_STEP_ID = '__tco__';
-
 function LiveScoreBar({ profile, scores, techAnswers }) {
   const dimResults   = calculateERPCompatibility(profile, scores);
   const answered     = Object.values(scores).filter((v) => v > 0).length;
@@ -58,17 +56,15 @@ function LiveScoreBar({ profile, scores, techAnswers }) {
   );
 }
 
-export default function AuditStep({ scores, onChange, onNext, onPrev, profile, plan, techAnswers, onTechChange, tcoData, onTcoChange }) {
+export default function AuditStep({ scores, onChange, onNext, onPrev, profile, plan, techAnswers, onTechChange }) {
   const [currentDim, setCurrentDim] = useState(0);
   const [error, setError]           = useState(false);
-  const [tcoError, setTcoError]     = useState('');
 
   const isPremium    = plan === 'premium';
-  const allQuestions = isPremium ? [...DIMENSIONS, ...TECH_QUESTIONS, { id: TCO_STEP_ID, label: 'Calculator TCO & ROI', icon: '' }] : DIMENSIONS;
+  const allQuestions = isPremium ? [...DIMENSIONS, ...TECH_QUESTIONS] : DIMENSIONS;
   const totalSteps   = allQuestions.length;
 
-  const isTcoStep     = isPremium && currentDim === totalSteps - 1;
-  const isTechSection = isPremium && currentDim >= DIMENSIONS.length && !isTcoStep;
+  const isTechSection = isPremium && currentDim >= DIMENSIONS.length;
   const currentQ      = allQuestions[currentDim];
 
   const industryQ = !isTechSection && currentQ.id === 'procese' && profile?.industrie_categorie
@@ -97,15 +93,6 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
   };
 
   const handleNext = () => {
-    if (isTcoStep) {
-      if (!tcoData.ore_manuale || !tcoData.nr_angajati_erp || !tcoData.cost_orar) {
-        setTcoError('Completați câmpurile obligatorii (primele 3).');
-        return;
-      }
-      setTcoError('');
-      onNext();
-      return;
-    }
     if (!currentAnswer) { setError(true); return; }
     if (isLast) { onNext(); }
     else { setCurrentDim((d) => d + 1); setError(false); }
@@ -116,14 +103,12 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
     else { setCurrentDim((d) => d - 1); setError(false); }
   };
 
-  const nextLabel = isTcoStep
+  const nextLabel = isLast
     ? 'Vezi Rezultatele'
-    : isLast
-    ? 'Calculator TCO'
-    : isTechSection
-    ? (currentDim === DIMENSIONS.length + TECH_QUESTIONS.length - 1 ? 'Calculator TCO' : `Întrebarea ${currentDim - DIMENSIONS.length + 2}`)
     : isPremium && currentDim === DIMENSIONS.length - 1
     ? 'Audit Tehnic'
+    : isTechSection
+    ? `Întrebarea ${currentDim - DIMENSIONS.length + 2}`
     : `Dimensiunea ${currentDim + 2}`;
 
   return (
@@ -189,132 +174,96 @@ export default function AuditStep({ scores, onChange, onNext, onPrev, profile, p
         </div>
       )}
 
-      {/* TCO STEP */}
-      {isTcoStep && (
-        <div className="mb-6 space-y-5">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 mb-1">Calculator TCO & ROI</h3>
-            <p className="text-sm text-slate-500">Introduceți datele actuale pentru a calcula economiile estimate după implementarea ERP.</p>
-          </div>
-          <div className="space-y-4">
-            {[
-              { key: 'ore_manuale',       label: 'Ore/săptămână pierdute pe procese manuale *', placeholder: 'ex: 20', suffix: 'ore/săpt.' },
-              { key: 'nr_angajati_erp',   label: 'Număr angajați care vor folosi ERP *',         placeholder: 'ex: 10', suffix: 'angajați' },
-              { key: 'cost_orar',         label: 'Cost orar mediu per angajat *',                placeholder: 'ex: 15', suffix: '€/oră' },
-              { key: 'cost_implementare', label: 'Buget implementare estimat (opțional)',        placeholder: 'ex: 5000', suffix: '€' },
-            ].map((f) => (
-              <div key={f.key}>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">{f.label}</label>
-                <div className="flex items-center border-2 border-slate-200 rounded-lg overflow-hidden focus-within:border-amber-400 transition-colors">
-                  <input
-                    type="number"
-                    min="0"
-                    value={tcoData[f.key] || ''}
-                    onChange={(e) => { onTcoChange({ ...tcoData, [f.key]: e.target.value }); setTcoError(''); }}
-                    placeholder={f.placeholder}
-                    className="flex-1 px-4 py-3 text-sm outline-none bg-white"
-                  />
-                  <span className="px-3 py-3 bg-slate-50 text-slate-500 text-xs border-l border-slate-200 whitespace-nowrap">{f.suffix}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {tcoError && <p className="text-red-500 text-xs">{tcoError}</p>}
-        </div>
-      )}
-
       {/* Întrebarea curentă */}
-      {!isTcoStep && (
-        <div className="mb-6 animate-fade-in" key={dim.id}>
-          <div className="flex items-center flex-wrap gap-2 mb-1">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-              isTechSection ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
-            }`}>
-              {isTechSection
-                ? `Tehnic ${currentDim - DIMENSIONS.length + 1} din ${TECH_QUESTIONS.length}`
-                : `Dimensiunea ${currentDim + 1} din ${DIMENSIONS.length}`}
+      <div className="mb-6 animate-fade-in" key={dim.id}>
+        <div className="flex items-center flex-wrap gap-2 mb-1">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+            isTechSection ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
+          }`}>
+            {isTechSection
+              ? `Tehnic ${currentDim - DIMENSIONS.length + 1} din ${TECH_QUESTIONS.length}`
+              : `Dimensiunea ${currentDim + 1} din ${DIMENSIONS.length}`}
+          </span>
+          {!isTechSection && dim.toeContext && (
+            <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1">
+              {dim.toeContext.includes('TOE') && <Tooltip term="TOE" explanation={TECH_TERMS['TOE']} />}
+              {dim.toeContext.includes('TAM') && <Tooltip term="TAM" explanation={TECH_TERMS['TAM']} />}
+              {dim.toeContext}
             </span>
-            {!isTechSection && dim.toeContext && (
-              <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1">
-                {dim.toeContext.includes('TOE') && <Tooltip term="TOE" explanation={TECH_TERMS['TOE']} />}
-                {dim.toeContext.includes('TAM') && <Tooltip term="TAM" explanation={TECH_TERMS['TAM']} />}
-                {dim.toeContext}
-              </span>
-            )}
-          </div>
-          <h3 className="text-lg font-semibold text-slate-800 mt-2 mb-5 leading-snug">
-            {dim.question}
-          </h3>
-
-          <div className="space-y-2.5">
-            {dim.options.map((opt, idx) => {
-              const optValue   = isTechSection ? opt.text : opt.score;
-              const isSelected = currentAnswer === optValue;
-              const barWidth   = `${((opt.score || (idx + 1)) / 4) * 100}%`;
-
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => selectOption(optValue)}
-                  className={`
-                    w-full text-left p-4 rounded-lg border-2 transition-colors group
-                    ${isSelected
-                      ? isTechSection
-                        ? 'border-amber-400 bg-amber-50'
-                        : 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}
-                  `}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`
-                      w-6 h-6 rounded flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5
-                      ${isSelected
-                        ? isTechSection ? 'bg-amber-400 text-white' : 'bg-blue-500 text-white'
-                        : 'bg-slate-100 text-slate-400'}
-                    `}>
-                      {isTechSection ? (idx + 1) : opt.score}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium leading-snug ${isSelected ? (isTechSection ? 'text-amber-800' : 'text-blue-800') : 'text-slate-700'}`}>
-                        {opt.text}
-                      </p>
-                      <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isSelected
-                              ? isTechSection ? 'bg-amber-400' : 'bg-blue-500'
-                              : 'bg-slate-200 group-hover:bg-slate-300'
-                          }`}
-                          style={{ width: barWidth }}
-                        />
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        isTechSection ? 'bg-amber-400' : 'bg-blue-500'
-                      }`}>
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {error && (
-            <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
-              </svg>
-              Selectați o opțiune pentru a continua.
-            </p>
           )}
         </div>
-      )}
+        <h3 className="text-lg font-semibold text-slate-800 mt-2 mb-5 leading-snug">
+          {dim.question}
+        </h3>
+
+        <div className="space-y-2.5">
+          {dim.options.map((opt, idx) => {
+            const optValue   = isTechSection ? opt.text : opt.score;
+            const isSelected = currentAnswer === optValue;
+            const barWidth   = `${((opt.score || (idx + 1)) / 4) * 100}%`;
+
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => selectOption(optValue)}
+                className={`
+                  w-full text-left p-4 rounded-lg border-2 transition-colors group
+                  ${isSelected
+                    ? isTechSection
+                      ? 'border-amber-400 bg-amber-50'
+                      : 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`
+                    w-6 h-6 rounded flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5
+                    ${isSelected
+                      ? isTechSection ? 'bg-amber-400 text-white' : 'bg-blue-500 text-white'
+                      : 'bg-slate-100 text-slate-400'}
+                  `}>
+                    {isTechSection ? (idx + 1) : opt.score}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium leading-snug ${isSelected ? (isTechSection ? 'text-amber-800' : 'text-blue-800') : 'text-slate-700'}`}>
+                      {opt.text}
+                    </p>
+                    <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isSelected
+                            ? isTechSection ? 'bg-amber-400' : 'bg-blue-500'
+                            : 'bg-slate-200 group-hover:bg-slate-300'
+                        }`}
+                        style={{ width: barWidth }}
+                      />
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      isTechSection ? 'bg-amber-400' : 'bg-blue-500'
+                    }`}>
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {error && (
+          <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
+            </svg>
+            Selectați o opțiune pentru a continua.
+          </p>
+        )}
+      </div>
 
       {/* Navigare */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-100">

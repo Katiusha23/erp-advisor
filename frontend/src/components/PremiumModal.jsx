@@ -112,48 +112,13 @@ function calcTechCompatibility(techAnswers, erpName) {
   return { score: Math.min(100, Math.max(0, score)), notes };
 }
 
-// Calculator TCO
-function calcTCO(tcoData, erpName) {
-  const oreManuale    = parseFloat(tcoData.ore_manuale)    || 0;
-  const nrAngajati    = parseFloat(tcoData.nr_angajati_erp)|| 0;
-  const costOrar      = parseFloat(tcoData.cost_orar)      || 0;
-  const costImpl      = parseFloat(tcoData.cost_implementare) || 0;
-
-  const costuriActuale   = oreManuale * nrAngajati * costOrar * 52; // anual
-  const reducereEstimata = 0.65; // ERP reduce procesele manuale cu ~65%
-  const economiiAnuale   = costuriActuale * reducereEstimata;
-
-  const costuriErp = {
-    'WinMentor': { licenta: 1200,  mentenanta: 600,  implementare: costImpl || 3000  },
-    'Saga':      { licenta: 800,   mentenanta: 400,  implementare: costImpl || 2000  },
-    'UNA.md':{ licenta: 2500, mentenanta: 1000, implementare: costImpl || 5000  },
-    'Odoo':      { licenta: 0,     mentenanta: 1500, implementare: costImpl || 8000  },
-  };
-
-  const costuri = costuriErp[erpName] || costuriErp['Saga'];
-  const tco1an  = costuri.licenta + costuri.mentenanta + costuri.implementare;
-  const tco3ani = costuri.licenta + costuri.mentenanta * 3 + costuri.implementare;
-  const breakEvenLuni = economiiAnuale > 0
-    ? Math.ceil((tco1an / economiiAnuale) * 12)
-    : null;
-
-  return { costuriActuale, economiiAnuale, tco1an, tco3ani, breakEvenLuni, costuri };
-}
-
 // ============================================================
 // Componenta principală
 // ============================================================
 export default function PremiumModal({ onClose, profile, scores, erpRecomandat }) {
-  const [stage, setStage] = useState('paywall'); // paywall | tehnic | tco | rezultate
+  const [stage, setStage] = useState('paywall'); // paywall | tehnic | rezultate
   const [techStep, setTechStep] = useState(0);
   const [techAnswers, setTechAnswers] = useState({});
-  const [tcoData, setTcoData] = useState({
-    ore_manuale: '',
-    nr_angajati_erp: '',
-    cost_orar: '',
-    cost_implementare: '',
-  });
-  const [tcoError, setTcoError] = useState('');
 
   const erpName = erpRecomandat?.name || 'Saga';
   const currentQ = TECH_QUESTIONS[techStep];
@@ -165,22 +130,12 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
       if (techStep < TECH_QUESTIONS.length - 1) {
         setTechStep((s) => s + 1);
       } else {
-        setStage('tco');
+        setStage('rezultate');
       }
     }, 300);
   };
 
-  const handleTCOSubmit = () => {
-    if (!tcoData.ore_manuale || !tcoData.nr_angajati_erp || !tcoData.cost_orar) {
-      setTcoError('Completați câmpurile obligatorii (primele 3).');
-      return;
-    }
-    setTcoError('');
-    setStage('rezultate');
-  };
-
-  const techResult  = stage === 'rezultate' ? calcTechCompatibility(techAnswers, erpName) : null;
-  const tcoResult   = stage === 'rezultate' ? calcTCO(tcoData, erpName) : null;
+  const techResult = stage === 'rezultate' ? calcTechCompatibility(techAnswers, erpName) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -193,7 +148,7 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
               <span className="text-3xl">⭐</span>
               <div>
                 <h2 className="text-xl font-black">Analiză Premium</h2>
-                <p className="text-amber-100 text-sm">Audit tehnic avansat + Calculator TCO</p>
+                <p className="text-amber-100 text-sm">Audit tehnic avansat al infrastructurii IT</p>
               </div>
             </div>
             <button
@@ -206,17 +161,14 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
             </button>
           </div>
           {/* Progress */}
-          {stage !== 'paywall' && stage !== 'rezultate' && (
-            <div className="mt-4 flex gap-1">
-              {['tehnic', 'tco'].map((s, i) => (
+          {stage === 'tehnic' && (
+            <div className="mt-4">
+              <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
                 <div
-                  key={s}
-                  className={`h-1.5 flex-1 rounded-full transition-all ${
-                    (stage === 'tehnic' && i === 0) || (stage === 'tco' && i <= 1)
-                      ? 'bg-white' : 'bg-white/30'
-                  }`}
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{ width: `${((techStep + 1) / TECH_QUESTIONS.length) * 100}%` }}
                 />
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -229,7 +181,7 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
               <div className="text-center">
                 <p className="text-slate-600 text-sm leading-relaxed">
                   Doriți o analiză completă și specifică infrastructurii companiei dumneavoastră?
-                  Raportul premium include audit tehnic detaliat și calculator de rentabilitate.
+                  Raportul premium include audit tehnic detaliat al compatibilității ERP cu infrastructura IT existentă.
                 </p>
               </div>
 
@@ -237,8 +189,8 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                 {[
                   { icon: '🖥️', title: 'Compatibilitate OS & Rețea',  desc: 'Analiza compatibilității ERP cu Windows, Linux, domeniu, workgroup' },
                   { icon: '🧱', title: 'Audit Firewall & Securitate',  desc: 'Evaluarea politicilor de securitate și infrastructurii de rețea' },
-                  { icon: '💰', title: 'Calculator TCO 3 ani',         desc: 'Cost total de proprietate și break-even față de procesele actuale' },
-                  { icon: '📈', title: 'ROI & Economii Estimate',      desc: 'Economii anuale estimate prin automatizarea proceselor manuale' },
+                  { icon: '📊', title: 'Scor compatibilitate tehnică',  desc: 'Procent de compatibilitate între infrastructura ta și ERP-ul recomandat' },
+                  { icon: '💡', title: 'Recomandări specifice',         desc: 'Observații tehnice personalizate pentru sistemul tău IT' },
                 ].map((f) => (
                   <div key={f.title} className="flex gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
                     <span className="text-2xl flex-shrink-0">{f.icon}</span>
@@ -314,53 +266,8 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
             </div>
           )}
 
-          {/* ====== CALCULATOR TCO ====== */}
-          {stage === 'tco' && (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-1">Calculator TCO & ROI</h3>
-                <p className="text-sm text-slate-500">Introduceți datele actuale pentru a calcula economiile estimate după implementarea ERP.</p>
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  { key: 'ore_manuale',     label: 'Ore/săptămână pierdute pe procese manuale *', placeholder: 'ex: 20', suffix: 'ore/săpt.' },
-                  { key: 'nr_angajati_erp', label: 'Număr angajați care vor folosi ERP *',        placeholder: 'ex: 10', suffix: 'angajați' },
-                  { key: 'cost_orar',       label: 'Cost orar mediu per angajat *',               placeholder: 'ex: 15', suffix: '€/oră' },
-                  { key: 'cost_implementare', label: 'Buget implementare estimat (opțional)',     placeholder: 'ex: 5000', suffix: '€' },
-                ].map((f) => (
-                  <div key={f.key}>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">{f.label}</label>
-                    <div className="flex items-center border-2 border-slate-200 rounded-xl overflow-hidden focus-within:border-amber-400 transition-colors">
-                      <input
-                        type="number"
-                        min="0"
-                        value={tcoData[f.key]}
-                        onChange={(e) => setTcoData({ ...tcoData, [f.key]: e.target.value })}
-                        placeholder={f.placeholder}
-                        className="flex-1 px-4 py-3 text-sm outline-none bg-white"
-                      />
-                      <span className="px-3 py-3 bg-slate-50 text-slate-500 text-xs border-l border-slate-200 whitespace-nowrap">
-                        {f.suffix}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {tcoError && <p className="text-red-500 text-xs">⚠ {tcoError}</p>}
-
-              <button
-                onClick={handleTCOSubmit}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-sm text-sm"
-              >
-                Calculează Analiza Completă →
-              </button>
-            </div>
-          )}
-
           {/* ====== REZULTATE ====== */}
-          {stage === 'rezultate' && techResult && tcoResult && (
+          {stage === 'rezultate' && techResult && (
             <div className="space-y-6">
 
               {/* Compatibilitate tehnică */}
@@ -395,48 +302,6 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-
-              <hr className="border-slate-100" />
-
-              {/* TCO */}
-              <div>
-                <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  💰 Calculator TCO & ROI - {erpName}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Costuri manuale actuale/an', value: `${tcoResult.costuriActuale.toLocaleString('ro-RO')} €`, color: 'text-red-600', bg: 'bg-red-50' },
-                    { label: 'Economii estimate/an',       value: `${Math.round(tcoResult.economiiAnuale).toLocaleString('ro-RO')} €`, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'TCO primul an',              value: `${tcoResult.tco1an.toLocaleString('ro-RO')} €`, color: 'text-slate-700', bg: 'bg-slate-50' },
-                    { label: 'TCO pe 3 ani',               value: `${tcoResult.tco3ani.toLocaleString('ro-RO')} €`, color: 'text-slate-700', bg: 'bg-slate-50' },
-                  ].map((item) => (
-                    <div key={item.label} className={`p-4 rounded-xl ${item.bg} border border-slate-100`}>
-                      <p className="text-xs text-slate-500 mb-1">{item.label}</p>
-                      <p className={`text-xl font-black ${item.color}`}>{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {tcoResult.breakEvenLuni !== null && (
-                  <div className="mt-3 p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-3">
-                    <span className="text-2xl">⏱️</span>
-                    <div>
-                      <p className="font-bold text-amber-800 text-sm">
-                        Break-even în {tcoResult.breakEvenLuni} {tcoResult.breakEvenLuni === 1 ? 'lună' : 'luni'}
-                      </p>
-                      <p className="text-amber-700 text-xs">
-                        Investiția se amortizează în aproximativ {Math.ceil(tcoResult.breakEvenLuni / 12 * 10) / 10} {tcoResult.breakEvenLuni <= 12 ? 'an' : 'ani'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {tcoResult.costuriActuale === 0 && (
-                  <p className="text-xs text-slate-400 mt-2 italic">
-                    * Introduceți date reale pentru calcule precise. Valorile de mai sus sunt estimative bazate pe medii de piață.
-                  </p>
                 )}
               </div>
 

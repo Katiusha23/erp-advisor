@@ -197,8 +197,6 @@ export default function PlanStep({ onSelect }) {
               { text: 'Raport PDF',                            extra: false },
               { text: 'Audit tehnic: OS, rețea, administrare', extra: true  },
               { text: 'Audit firewall & politici securitate',  extra: true  },
-              { text: 'Calculator TCO pe 3 ani',               extra: true  },
-              { text: 'ROI & Break-even estimat',              extra: true  },
               { text: 'Consultanță personalizată pe email',    extra: true  },
             ].map((f) => (
               <li key={f.text} className="flex items-start gap-2 text-sm">
