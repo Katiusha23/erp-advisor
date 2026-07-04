@@ -149,7 +149,7 @@ export function calcTechCompatibility(techScores, erpName) {
     if (sec === SEC_SIEM)                        { score += 5; notes.push('MFA și SIEM active - cerințe esențiale acoperite pentru deployment Odoo în cloud'); }
     if (sec === 'Certificare ISO 27001')          { score += 5; notes.push('ISO 27001 - cel mai înalt nivel de securitate, ideal pentru Odoo cu date sensibile în cloud'); }
     // Firewall: Odoo cloud beneficiază de protecție avansată
-    if (sec === 'Antivirus și firewall de bază' && fw === 'Router ISP cu firewall integrat') { score -= 5; notes.push('Combinație router ISP + antivirus basic este insuficientă pentru un deployment Odoo cloud sigur'); }
+    if (fw === 'Router ISP cu firewall integrat') { score -= 3; notes.push('Router ISP este insuficient pentru protecția unui deployment Odoo cloud - recomandat firewall dedicat'); }
     if (fw === FW_CLOUD || fw === FW_UTM) { score += 5; notes.push('Firewall avansat compatibil cu deployment cloud Odoo - traficul web este protejat corespunzător'); }
     if (fw === 'Firewall hardware dedicat (Cisco, Fortinet, Sophos etc.)') { score += 3; notes.push('Firewall hardware asigură protecție solidă pentru serverul Odoo on-premises'); }
   }

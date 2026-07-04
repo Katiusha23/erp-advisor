@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { calcTechCompatibility } from '../utils/techQuestions.js';
 
 // Întrebări audit tehnic avansat
 const TECH_QUESTIONS = [
@@ -61,56 +62,6 @@ const TECH_QUESTIONS = [
   },
 ];
 
-// Compatibilitate ERP cu configurația tehnică
-function calcTechCompatibility(techAnswers, erpName) {
-  let score = 100;
-  const notes = [];
-
-  const os = techAnswers.os_tip;
-  const net = techAnswers.retea_tip;
-  const fw  = techAnswers.firewall;
-  const sec = techAnswers.securitate;
-
-  if (erpName === 'WinMentor') {
-    if (os === 'linux')     { score -= 30; notes.push('WinMentor nu rulează nativ pe Linux - necesită Windows sau VM'); }
-    if (os === 'macos')     { score -= 35; notes.push('WinMentor este exclusiv Windows - pe macOS necesită VM (Parallels, VMware Fusion)'); }
-    if (os === 'mix')       { score -= 15; notes.push('Stațiile non-Windows necesită VM sau acces Remote Desktop pentru WinMentor'); }
-    if (os === 'windows10') { score -= 5;  notes.push('Windows 10 suportat, dar Windows 11 sau Server recomandat'); }
-    if (net === 'workgroup'){ score -= 10; notes.push('Workgroup funcționează, dar domeniu Windows recomandabil pentru multi-user'); }
-  }
-
-  if (erpName === 'Saga') {
-    if (os === 'linux')     { score -= 25; notes.push('Saga rulează pe Windows; pe Linux necesită Wine sau VM'); }
-    if (os === 'macos')     { score -= 30; notes.push('Saga nu are versiune nativă macOS - necesită VM (Parallels) sau acces Remote Desktop'); }
-    if (os === 'mix')       { score -= 10; notes.push('Utilizatorii Mac/Linux necesită Remote Desktop sau VM pentru acces Saga'); }
-    if (net === 'workgroup'){ score -= 5;  notes.push('Funcționează în workgroup, dar performanța pe rețea partajată e limitată'); }
-  }
-
-  if (erpName === 'UNA.md') {
-    if (os === 'linux')     { score -= 20; notes.push('UNA.md preferă Windows Server; Linux suportat parțial'); }
-    if (os === 'macos')     { score -= 25; notes.push('UNA.md nu are client nativ macOS - acces prin Remote Desktop sau browser (modul web)'); }
-    if (os === 'mix')       { score -= 10; notes.push('Stațiile non-Windows pot accesa UNA prin modulul web, cu funcționalitate limitată'); }
-    if (net === 'workgroup'){ score -= 15; notes.push('Recomandă domeniu Windows pentru acces multi-utilizator stabil'); }
-  }
-
-  if (erpName === 'Odoo') {
-    if (os === 'linux' || os === 'mix') { score += 5; notes.push('Odoo rulează nativ pe Linux - configurație ideală'); }
-    if (os === 'macos')     { score += 3; notes.push('Odoo se accesează din browser - macOS este pe deplin compatibil fără configurare suplimentară'); }
-    if (os === 'windows10' || os === 'windows11') { score -= 5; notes.push('Odoo pe Windows necesită configurare suplimentară (WSL sau Docker) pentru server'); }
-    if (net === 'cloud' || net === 'hibrid') { score += 5; notes.push('Arhitectura cloud-first a Odoo se potrivește perfect cu infrastructura ta'); }
-    if (fw === 'cloud_fw' || fw === 'utm')   { score += 5; notes.push('Firewall avansat compatibil cu deployment cloud Odoo'); }
-  }
-
-  if (sec === 'iso27001' || sec === 'advanced') {
-    notes.push('Politicile de securitate avansate sunt compatibile cu toate sistemele ERP analizate');
-  }
-  if (sec === 'basic' && (erpName === 'Odoo' || erpName === 'UNA.md')) {
-    score -= 5;
-    notes.push('Se recomandă cel puțin MFA pentru accesul la ERP cloud/web');
-  }
-
-  return { score: Math.min(100, Math.max(0, score)), notes };
-}
 
 // ============================================================
 // Componenta principală
