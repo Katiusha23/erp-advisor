@@ -100,6 +100,11 @@ export function calcTechCompatibility(techScores, erpName) {
     if (net === NET_WG)      { score -= 10; notes.push('Workgroup funcționează, dar domeniu Windows recomandat pentru multi-user'); }
     if (adm === ADM_NONE)    { score -= 5;  notes.push('WinMentor necesită cel puțin suport IT de bază pentru instalare și mentenanță'); }
     if (adm === ADM_IT)      { score += 3;  notes.push('Departamentul IT intern facilitează implementarea și suportul WinMentor'); }
+    // Securitate: WinMentor on-premises beneficiază de politici stricte în rețeaua locală
+    if (sec === 'Antivirus și firewall de bază') { score -= 5; notes.push('WinMentor stochează date sensibile local - se recomandă politici de securitate mai stricte decât antivirus de bază'); }
+    if (sec === 'Certificare ISO 27001')          { score += 3; notes.push('Mediu securizat ISO 27001 - ideal pentru protecția datelor financiare din WinMentor'); }
+    // Firewall: rețea locală protejată avantajează WinMentor on-premises
+    if (fw === 'Firewall hardware dedicat (Cisco, Fortinet, Sophos etc.)' || fw === FW_UTM) { score += 2; notes.push('Firewall dedicat protejează eficient rețeaua locală unde rulează WinMentor'); }
   }
 
   if (erpName === 'Saga') {
@@ -109,6 +114,10 @@ export function calcTechCompatibility(techScores, erpName) {
     if (os === OS_SERVER)    { score += 2;  notes.push('Windows Server asigură stabilitate pentru Saga în rețea'); }
     if (net === NET_WG)      { score -= 5;  notes.push('Funcționează în workgroup, dar performanța pe rețea partajată e limitată'); }
     if (adm === ADM_NONE)    { score -= 2;  notes.push('Saga poate fi administrat cu cunoștințe IT minime, dar lipsa suportului crește riscul de erori'); }
+    // Securitate: Saga stochează date financiare local
+    if (sec === 'Antivirus și firewall de bază') { score -= 3; notes.push('Saga stochează date contabile local - politici de securitate mai stricte reduc riscul de pierdere a datelor'); }
+    if (sec === 'Certificare ISO 27001')          { score += 3; notes.push('Mediu ISO 27001 asigură protecția datelor contabile gestionate de Saga'); }
+    if (fw === 'Firewall hardware dedicat (Cisco, Fortinet, Sophos etc.)' || fw === FW_UTM) { score += 2; notes.push('Firewall dedicat protejează baza de date Saga în rețeaua locală'); }
   }
 
   if (erpName === 'UNA.md') {
@@ -120,6 +129,10 @@ export function calcTechCompatibility(techScores, erpName) {
     if (adm === ADM_NONE)    { score -= 8;  notes.push('UNA.md cu Oracle necesită administrare IT pentru instalare, licențiere și backup'); }
     if (adm === ADM_IT)      { score += 4;  notes.push('Departament IT intern - ideal pentru administrarea bazei Oracle din UNA.md'); }
     if (adm === ADM_EXT)     { score += 2;  notes.push('Firma IT externalizată poate asigura suportul tehnic pentru UNA.md'); }
+    // Securitate: UNA Cloud necesită MFA pentru acces web
+    if (sec === 'Antivirus și firewall de bază') { score -= 5; notes.push('UNA Cloud necesită cel puțin MFA pentru acces securizat - antivirus de bază este insuficient'); }
+    if (sec === SEC_SIEM || sec === 'Certificare ISO 27001') { score += 4; notes.push('Politici avansate de securitate - compatibile cu cerințele UNA Cloud pentru protecția datelor'); }
+    if (fw === FW_CLOUD || fw === FW_UTM) { score += 3; notes.push('Firewall avansat asigură protecția conexiunilor către serverul UNA.md'); }
   }
 
   if (erpName === 'Odoo') {
@@ -128,14 +141,17 @@ export function calcTechCompatibility(techScores, erpName) {
     if (os === 'Windows 10' || os === 'Windows 11') { score -= 5; notes.push('Odoo pe Windows necesită WSL sau Docker pentru server'); }
     if (os === OS_SERVER)                  { score -= 3;  notes.push('Odoo pe Windows Server necesită WSL2 sau Docker; Linux rămâne mediul preferat'); }
     if (net === NET_CLOUD || net === NET_HIBRID) { score += 5; notes.push('Arhitectura cloud-first a Odoo se potrivește perfect cu infrastructura ta'); }
-    if (fw === FW_CLOUD   || fw === FW_UTM)     { score += 5; notes.push('Firewall avansat compatibil cu deployment cloud Odoo'); }
     if (adm === ADM_NONE)  { score -= 10; notes.push('Odoo necesită expertiză IT solidă pentru instalare, configurare module și mentenanță server'); }
     if (adm === ADM_IT)    { score += 7;  notes.push('Departament IT intern dedicat - condiție ideală pentru deployment și customizare Odoo'); }
     if (adm === ADM_EXT)   { score += 3;  notes.push('Firma IT externalizată poate gestiona serverul Odoo, dar timpul de răspuns poate fi limitat'); }
-  }
-
-  if (sec === 'Certificare ISO 27001' || sec === SEC_SIEM) {
-    notes.push('Politicile de securitate avansate sunt compatibile cu toate sistemele ERP analizate');
+    // Securitate: Odoo cloud necesită MFA și politici stricte de acces
+    if (sec === 'Antivirus și firewall de bază') { score -= 5; notes.push('Odoo cloud necesită cel puțin MFA activat - antivirus de bază nu protejează suficient accesul web la date'); }
+    if (sec === SEC_SIEM)                        { score += 5; notes.push('MFA și SIEM active - cerințe esențiale acoperite pentru deployment Odoo în cloud'); }
+    if (sec === 'Certificare ISO 27001')          { score += 5; notes.push('ISO 27001 - cel mai înalt nivel de securitate, ideal pentru Odoo cu date sensibile în cloud'); }
+    // Firewall: Odoo cloud beneficiază de protecție avansată
+    if (sec === 'Antivirus și firewall de bază' && fw === 'Router ISP cu firewall integrat') { score -= 5; notes.push('Combinație router ISP + antivirus basic este insuficientă pentru un deployment Odoo cloud sigur'); }
+    if (fw === FW_CLOUD || fw === FW_UTM) { score += 5; notes.push('Firewall avansat compatibil cu deployment cloud Odoo - traficul web este protejat corespunzător'); }
+    if (fw === 'Firewall hardware dedicat (Cisco, Fortinet, Sophos etc.)') { score += 3; notes.push('Firewall hardware asigură protecție solidă pentru serverul Odoo on-premises'); }
   }
 
   return { score: Math.min(100, Math.max(0, score)), notes };
