@@ -1,66 +1,5 @@
 import { useState } from 'react';
-import { calcTechCompatibility } from '../utils/techQuestions.js';
-
-// Întrebări audit tehnic avansat
-const TECH_QUESTIONS = [
-  {
-    id: 'os_tip',
-    label: 'Sistem de operare predominant',
-    icon: '💻',
-    options: [
-      { value: 'windows10', label: 'Windows 10',           desc: 'Suport până în oct. 2025' },
-      { value: 'windows11', label: 'Windows 11',           desc: 'Recomandat, suport activ' },
-      { value: 'windowsS',  label: 'Windows Server',       desc: '2016 / 2019 / 2022' },
-      { value: 'macos',     label: 'macOS',                desc: 'Apple Silicon sau Intel Mac' },
-      { value: 'linux',     label: 'Linux',                desc: 'Ubuntu, CentOS, Debian etc.' },
-      { value: 'mix',       label: 'Mixt (Win + Mac/Linux)', desc: 'Infrastructură eterogenă' },
-    ],
-  },
-  {
-    id: 'retea_tip',
-    label: 'Tipul rețelei interne',
-    icon: '🌐',
-    options: [
-      { value: 'workgroup',  label: 'Workgroup',         desc: 'Fără server central, peer-to-peer' },
-      { value: 'domeniu',    label: 'Domeniu Windows',   desc: 'Active Directory / LDAP' },
-      { value: 'cloud',      label: 'Cloud-first',       desc: 'Azure AD / Google Workspace' },
-      { value: 'hibrid',     label: 'Hibrid On-prem + Cloud', desc: 'Infrastructură mixtă' },
-    ],
-  },
-  {
-    id: 'admin_retea',
-    label: 'Administrarea rețelei',
-    icon: '🛠️',
-    options: [
-      { value: 'intern',      label: 'Departament IT intern',   desc: 'Echipă IT dedicată' },
-      { value: 'extern',      label: 'Firma externalizată',     desc: 'IT managed service' },
-      { value: 'partial',     label: 'Parțial intern + extern', desc: 'Responsabilități împărțite' },
-      { value: 'nimeni',      label: 'Fără admin dedicat',      desc: 'Autogestionat de utilizatori' },
-    ],
-  },
-  {
-    id: 'securitate',
-    label: 'Politici de securitate',
-    icon: '🔒',
-    options: [
-      { value: 'basic',      label: 'Antivirus + firewall',      desc: 'Protecție minimă' },
-      { value: 'policies',   label: 'Group Policy (GPO)',        desc: 'Politici de grup configurate' },
-      { value: 'advanced',   label: 'SIEM + MFA + GPO',         desc: 'Securitate avansată' },
-      { value: 'iso27001',   label: 'Certificare ISO 27001',     desc: 'Standard internațional' },
-    ],
-  },
-  {
-    id: 'firewall',
-    label: 'Infrastructură firewall / rețea',
-    icon: '🧱',
-    options: [
-      { value: 'router',     label: 'Router ISP + Windows FW',  desc: 'Protecție de bază' },
-      { value: 'hw_fw',      label: 'Firewall hardware dedicat', desc: 'Cisco, Fortinet, Sophos etc.' },
-      { value: 'utm',        label: 'UTM / Next-Gen Firewall',  desc: 'IPS, DPI, VPN integrat' },
-      { value: 'cloud_fw',   label: 'Cloud firewall / SD-WAN',  desc: 'Palo Alto, Zscaler etc.' },
-    ],
-  },
-];
+import { TECH_QUESTIONS, calcTechCompatibility } from '../utils/techQuestions.js';
 
 
 // ============================================================
@@ -189,20 +128,19 @@ export default function PremiumModal({ onClose, profile, scores, erpRecomandat }
                 <div className="space-y-2">
                   {currentQ.options.map((opt) => (
                     <button
-                      key={opt.value}
+                      key={opt.text}
                       type="button"
-                      onClick={() => selectTechAnswer(currentQ.id, opt.value)}
+                      onClick={() => selectTechAnswer(currentQ.id, opt.text)}
                       className={`
                         w-full p-4 rounded-xl border-2 text-left transition-all duration-200
-                        ${techAnswers[currentQ.id] === opt.value
+                        ${techAnswers[currentQ.id] === opt.text
                           ? 'border-amber-400 bg-amber-50'
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}
                       `}
                     >
-                      <span className={`font-semibold text-sm ${techAnswers[currentQ.id] === opt.value ? 'text-amber-700' : 'text-slate-700'}`}>
-                        {opt.label}
+                      <span className={`font-semibold text-sm ${techAnswers[currentQ.id] === opt.text ? 'text-amber-700' : 'text-slate-700'}`}>
+                        {opt.text}
                       </span>
-                      <span className="text-xs text-slate-500 ml-2">{opt.desc}</span>
                     </button>
                   ))}
                 </div>
