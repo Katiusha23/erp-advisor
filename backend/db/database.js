@@ -60,6 +60,65 @@ const initDatabase = async () => {
 
   persistToFile();
   console.log('✅ Baza de date inițializată:', DB_PATH);
+
+  // Seed automat dacă baza e goală
+  const count = db.exec('SELECT COUNT(*) as cnt FROM audit_results')[0]?.values?.[0]?.[0] || 0;
+  if (count === 0) {
+    console.log('📦 Baza de date goală — adăugare date seed...');
+    const seedData = [
+      // România - Producție
+      ['RO','Producție','Alimentară & Băuturi',45,'15-40k',3,3,2,3,3,2,2,2,2,2,63,'WinMentor'],
+      ['RO','Producție','Automotive & Piese Auto',120,'15-40k',4,4,3,3,4,3,3,3,2,3,80,'WinMentor'],
+      ['RO','Producție','Textile & Îmbrăcăminte',30,'5-15k',2,2,1,2,2,1,1,2,2,1,40,'Saga Software'],
+      ['RO','Producție','Mobilă & Prelucrarea Lemnului',60,'15-40k',3,3,2,2,3,2,2,2,2,2,58,'WinMentor'],
+      ['RO','Producție','Altă producție industrială',200,'peste40k',4,4,4,4,4,4,4,4,3,4,98,'WinMentor'],
+      // România - Comerț & Distribuție
+      ['RO','Comerț & Distribuție','Retail alimentar (FMCG)',25,'5-15k',2,2,1,2,2,1,1,2,3,2,45,'Saga Software'],
+      ['RO','Comerț & Distribuție','Distribuție en-gros',70,'15-40k',3,3,1,3,3,2,2,2,3,2,60,'WinMentor'],
+      ['RO','Comerț & Distribuție','E-commerce & Online',15,'5-15k',3,2,2,3,2,2,2,3,4,3,65,'Odoo Community'],
+      ['RO','Comerț & Distribuție','Import-export',40,'15-40k',3,3,2,3,3,2,2,3,3,2,65,'WinMentor'],
+      ['RO','Comerț & Distribuție','Retail non-alimentar',8,'sub5k',1,2,1,1,2,1,1,1,2,1,33,'Saga Software'],
+      // România - Servicii
+      ['RO','Servicii','Servicii profesionale (consultanță, juridic, contabilitate)',12,'5-15k',3,3,2,3,3,2,2,3,2,3,65,'Odoo Community'],
+      ['RO','Servicii','Transport & Logistică',55,'15-40k',3,3,2,3,3,2,2,2,2,2,60,'WinMentor'],
+      ['RO','Servicii','HoReCa (hotel, restaurant, cafenea)',20,'5-15k',2,2,1,2,2,1,1,2,3,2,45,'Saga Software'],
+      ['RO','Servicii','Educație & Training',35,'5-15k',2,3,2,3,2,2,2,2,3,3,60,'Odoo Community'],
+      ['RO','Servicii','Media & Publicitate',18,'5-15k',3,2,3,3,2,3,3,3,4,4,75,'Odoo Community'],
+      // România - IT & Tehnologie
+      ['RO','IT & Tehnologie','Dezvoltare software & aplicații',25,'5-15k',4,3,4,4,3,4,4,4,4,4,95,'Odoo Community'],
+      ['RO','IT & Tehnologie','Servicii IT & Outsourcing',40,'15-40k',3,3,3,4,3,3,3,3,3,4,83,'Odoo Community'],
+      ['RO','IT & Tehnologie','Telecomunicații',80,'peste40k',4,4,4,4,4,4,4,4,3,4,98,'Odoo Community'],
+      // România - Construcții
+      ['RO','Construcții','Construcții civile & industriale',65,'15-40k',2,3,1,2,3,1,1,2,1,1,45,'WinMentor'],
+      ['RO','Construcții','Real Estate & Imobiliare',30,'15-40k',3,3,2,3,3,2,2,3,3,2,65,'WinMentor'],
+      // România - Non-profit
+      ['RO','Non-profit & ONG','ONG & Asociații',10,'sub5k',2,1,1,2,2,1,1,1,2,2,38,'Saga Software'],
+      ['RO','Non-profit & ONG','Fundații',15,'sub5k',2,2,1,2,3,1,1,2,2,2,45,'Saga Software'],
+      // Moldova - diverse industrii
+      ['MD','Producție','Alimentară & Băuturi',55,'15-40k',3,3,2,3,3,2,2,2,2,2,60,'UNA.md'],
+      ['MD','Producție','Altă producție industrială',110,'15-40k',4,3,3,3,4,3,3,3,2,3,78,'UNA.md'],
+      ['MD','Comerț & Distribuție','Distribuție en-gros',45,'15-40k',3,3,2,3,3,2,2,2,2,2,58,'UNA.md'],
+      ['MD','Comerț & Distribuție','Retail alimentar (FMCG)',20,'5-15k',2,2,1,2,2,1,1,1,2,1,38,'UNA.md'],
+      ['MD','Servicii','Servicii profesionale (consultanță, juridic, contabilitate)',18,'5-15k',3,3,2,3,3,2,2,2,3,3,65,'UNA.md'],
+      ['MD','Servicii','Transport & Logistică',40,'15-40k',3,3,2,2,3,2,2,2,2,2,58,'UNA.md'],
+      ['MD','IT & Tehnologie','Dezvoltare software & aplicații',22,'5-15k',4,3,4,4,3,4,3,4,4,4,93,'Odoo Community'],
+      ['MD','Non-profit & ONG','ONG & Asociații',8,'sub5k',2,1,1,2,2,1,1,1,2,1,35,'UNA.md'],
+    ];
+
+    const insertSql = `INSERT INTO audit_results
+      (tara, industrie, industrie_subcategorie, nr_angajati, buget,
+       scor_procese, scor_financiar, scor_it, scor_echipa, scor_conformitate,
+       scor_securitate, scor_infrastructura_date, scor_aplicatii_sw,
+       scor_prezenta_online, scor_colaborare, scor_total, erp_recomandat)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    for (const row of seedData) {
+      db.run(insertSql, row);
+    }
+    persistToFile();
+    console.log(`✅ ${seedData.length} înregistrări seed adăugate.`);
+  }
+
   return db;
 };
 
