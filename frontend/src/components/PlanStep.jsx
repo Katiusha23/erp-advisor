@@ -22,7 +22,7 @@ function PaymentModal({ onSuccess, onClose }) {
         <div className="border-b border-slate-200 p-5 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-800">Plată securizată</h2>
-            <p className="text-sm text-slate-400">Plan Premium — 29 €</p>
+            <p className="text-sm text-slate-400">Plan Premium - 29 €</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
             <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

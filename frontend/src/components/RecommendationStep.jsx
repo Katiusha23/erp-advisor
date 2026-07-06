@@ -391,7 +391,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             Email trimis la <strong className="mx-1">{profile.email}</strong>
-            {plan === 'premium' && '— veți fi contactat în 48h.'}
+            {plan === 'premium' && '- veți fi contactat în 48h.'}
           </div>
         )}
         {emailStatus === 'error' && (
@@ -419,7 +419,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
               <p className="text-slate-500 text-sm mt-0.5">
                 Compania dvs. e mai pregătită decât{' '}
                 <strong className="text-slate-700">{benchmarkData.percentila}%</strong> din IMM-urile din{' '}
-                {profile.industrie_categorie || profile.industrie} —{' '}
+                {profile.industrie_categorie || profile.industrie} -{' '}
                 {profile.tara === 'RO' ? 'România' : 'Moldova'}
               </p>
             </div>
@@ -438,7 +438,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-slate-800 text-sm">Compatibilitate tehnică — {topERP.name}</h3>
+                <h3 className="font-semibold text-slate-800 text-sm">Compatibilitate tehnică - {topERP.name}</h3>
                 <p className="text-xs text-slate-400">Bazat pe infrastructura IT declarată</p>
               </div>
             </div>
@@ -453,7 +453,7 @@ export default function RecommendationStep({ profile, scores, techAnswers, tcoDa
                 </div>
                 <p className="text-xs text-slate-400 mt-1">
                   {techResult.score >= 75 ? 'Infrastructura este compatibilă cu ' + topERP.name
-                    : techResult.score >= 50 ? 'Compatibilitate parțială — ajustări minore necesare'
+                    : techResult.score >= 50 ? 'Compatibilitate parțială - ajustări minore necesare'
                     : 'Sunt necesare modificări de infrastructură înainte de implementare'}
                 </p>
               </div>

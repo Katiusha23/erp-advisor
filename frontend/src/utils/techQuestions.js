@@ -22,7 +22,7 @@ export const TECH_QUESTIONS = [
     question: 'Cum este organizată rețeaua internă a companiei?',
     options: [
       { score: 1, text: 'Workgroup (fără server central)' },
-      { score: 3, text: 'Domeniu Windows cu Active Directory / LDAP' },
+      { score: 3, text: 'Domeniu Windows cu Active Directory' },
       { score: 4, text: 'Cloud (Azure AD / Google Workspace)' },
       { score: 3, text: 'Hibrid (on-premises + cloud)' },
     ],

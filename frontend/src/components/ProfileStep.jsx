@@ -119,7 +119,7 @@ export default function ProfileStep({ profile, onChange, onNext }) {
         {/* INDUSTRIA - PAS 1 */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Domeniu de activitate</label>
-          <p className="text-xs text-slate-400 mb-3">Pasul 1 — alegeți categoria principală</p>
+          <p className="text-xs text-slate-400 mb-3">Pasul 1 - alegeți categoria principală</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {INDUSTRY_CATEGORIES.map((cat) => {
               const isSelected = profile.industrie_categorie === cat.id;
@@ -149,9 +149,9 @@ export default function ProfileStep({ profile, onChange, onNext }) {
         {profile.industrie_categorie && (
           <div className="animate-slide-up">
             <label className="block text-sm font-semibold text-slate-700 mb-1">
-              Subcategorie — {profile.industrie_categorie}
+              Subcategorie - {profile.industrie_categorie}
             </label>
-            <p className="text-xs text-slate-400 mb-3">Pasul 2 — alegeți subcategoria specifică</p>
+            <p className="text-xs text-slate-400 mb-3">Pasul 2 - alegeți subcategoria specifică</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {subcategories.map((sub) => {
                 const isSelected = profile.industrie === sub;

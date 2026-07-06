@@ -28,7 +28,7 @@ function LiveScoreBar({ profile, scores, techAnswers }) {
     <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
       <div className="flex items-center justify-between mb-2">
         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          Compatibilitate ERP — timp real
+          Compatibilitate ERP - timp real
         </p>
         {techAnswered > 0 && (
           <span className="text-[10px] bg-amber-50 text-amber-600 font-medium px-2 py-0.5 rounded border border-amber-200">
