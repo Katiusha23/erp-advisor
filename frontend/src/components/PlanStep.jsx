@@ -135,7 +135,7 @@ export default function PlanStep({ onSelect }) {
 
           <ul className="space-y-2.5 flex-1 mb-6">
             {[
-              { text: 'Audit pe 10 dimensiuni' },
+              { text: 'Evaluare pe 10 dimensiuni' },
               { text: 'Scor pregătire ERP' },
               { text: 'Recomandare sistem ERP' },
               { text: 'Comparație 4 sisteme' },
@@ -179,13 +179,13 @@ export default function PlanStep({ onSelect }) {
 
           <ul className="space-y-2.5 flex-1 mb-6">
             {[
-              { text: 'Audit pe 10 dimensiuni',                extra: false },
+              { text: 'Evaluare pe 10 dimensiuni',                extra: false },
               { text: 'Scor pregătire ERP',                    extra: false },
               { text: 'Recomandare sistem ERP',                extra: false },
               { text: 'Comparație 4 sisteme',                  extra: false },
               { text: 'Raport PDF',                            extra: false },
-              { text: 'Audit tehnic: OS, rețea, administrare', extra: true  },
-              { text: 'Audit firewall & politici securitate',  extra: true  },
+              { text: 'Evaluare tehnică: OS, rețea, administrare', extra: true  },
+              { text: 'Evaluare firewall & politici securitate',  extra: true  },
               { text: 'Consultanță personalizată pe email',    extra: true  },
             ].map((f) => (
               <li key={f.text} className="flex items-start gap-2 text-sm">
